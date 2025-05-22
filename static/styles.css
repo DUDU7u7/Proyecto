@@ -4,7 +4,7 @@ body {
     text-align: center;
 }
 
-h1 {
+h1, h2 {
     color: #333;
 }
 
@@ -23,6 +23,8 @@ label {
 }
 
 input[type="text"],
+input[type="password"],
+input[type="email"],
 input[type="number"] {
     padding: 8px;
     width: 200px;
@@ -40,4 +42,24 @@ input[type="submit"] {
 
 input[type="submit"]:hover {
     background-color: #4cae4c;
+}
+
+a {
+    color: #007bff;
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+table {
+    border-collapse: collapse;
+    width: 80%;
+    margin-top: 20px;
+}
+
+th, td {
+    padding: 10px;
+    border: 1px solid #ccc;
 }

@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Panel de Usuarios</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <h1>Bienvenido {{ session['usuario'] }}</h1>
+    <a href="{{ url_for('logout') }}">Cerrar sesión</a>
+    <h2>Usuarios registrados</h2>
+    <table border="1" style="margin: 0 auto;">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Usuario</th>
+                <th>Correo</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for usuario in usuarios %}
+            <tr>
+                <td>{{ usuario.id }}</td>
+                <td>{{ usuario.nombre }}</td>
+                <td>{{ usuario.usuario }}</td>
+                <td>{{ usuario.correo }}</td>
+                <td>
+                    <a href="{{ url_for('editar', id=usuario.id) }}">Editar</a> |
+                    <a href="{{ url_for('eliminar', id=usuario.id) }}" onclick="return confirm('¿Eliminar este usuario?')">Eliminar</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

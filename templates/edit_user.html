@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Editar Usuario</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <h1>Editar Usuario</h1>
+    <form method="post">
+        <label for="nombre">Nombre:</label>
+        <input type="text" name="nombre" value="{{ usuario.nombre }}" required>
+        <br><br>
+        <label for="correo">Correo:</label>
+        <input type="email" name="correo" value="{{ usuario.correo }}" required>
+        <br><br>
+        <input type="submit" value="Guardar cambios">
+    </form>
+    <br>
+    <a href="{{ url_for('dashboard') }}">Volver al panel</a>
+</body>
+</html>
