@@ -25,7 +25,7 @@
                 <td>{{ usuario.id }}</td>
                 <td>{{ usuario.nombre }}</td>
                 <td>{{ usuario.usuario }}</td>
-                <td>{{ usuario.correo }}</td>
+                <td>{{ usuario.email }}</td>
                 <td>
                     <a href="{{ url_for('editar', id=usuario.id) }}">Editar</a> |
                     <a href="{{ url_for('eliminar', id=usuario.id) }}" onclick="return confirm('¿Eliminar este usuario?')">Eliminar</a>
