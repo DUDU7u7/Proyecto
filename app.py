@@ -11,45 +11,49 @@ db = mysql.connector.connect(
     host="localhost",
     user="root",
     password="",
-    database="flask_app"
+    database="dudulist"
 )
 
 # Página principal (login)
 @app.route('/', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        usuario = request.form['usuario']
-        contrasena = request.form['contrasena']
+        email = request.form['email']
+        password = request.form['password']
 
         cursor = db.cursor(dictionary=True)
-        cursor.execute("SELECT * FROM usuarios WHERE usuario = %s", (usuario,))
+        cursor.execute("SELECT * FROM usuarios WHERE email = %s", (email,))
         user = cursor.fetchone()
 
-        if user and bcrypt.check_password_hash(user['contrasena'], contrasena):
-            session['usuario'] = user['usuario']
+        if user and bcrypt.check_password_hash(user['password'], password):
+            session['usuario'] = user['nombre']  # También puedes usar user['id'] o user['email']
             return redirect(url_for('dashboard'))
         else:
             return render_template('login.html', error="Credenciales incorrectas")
 
     return render_template('login.html')
 
+
 # Página de registro
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
         nombre = request.form['nombre']
-        usuario = request.form['usuario']
-        correo = request.form['correo']
-        contrasena = bcrypt.generate_password_hash(request.form['contrasena']).decode('utf-8')
+        email = request.form['email']
+        password = bcrypt.generate_password_hash(request.form['password']).decode('utf-8')
+        fdn = request.form['fdn']  # Espera un formato de fecha válido: 'YYYY-MM-DD'
 
         cursor = db.cursor()
         try:
-            cursor.execute("INSERT INTO usuarios (nombre, usuario, correo, contrasena) VALUES (%s, %s, %s, %s)",
-                           (nombre, usuario, correo, contrasena))
+            cursor.execute(
+                "INSERT INTO usuarios (nombre, email, password, fdn) VALUES (%s, %s, %s, %s)",
+                (nombre, email, password, fdn)
+            )
             db.commit()
             return redirect(url_for('login'))
-        except:
-            return render_template('register.html', error="Usuario ya existe")
+        except Exception as e:
+            print(e)  # Útil para depurar
+            return render_template('register.html', error="El nombre o el correo ya están registrados")
 
     return render_template('register.html')
 
