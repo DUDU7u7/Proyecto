@@ -15,7 +15,7 @@ def conectar():
         database='dudulist'
     )
 
-#LOGIN 
+#INGRESO DE USUARIO
 @app.route('/', methods=['GET', 'POST'])
 def login():
     error = None
@@ -41,7 +41,7 @@ def login():
             error = 'Usuario o contraseña incorrectos'
     return render_template('login.html', error=error)
 
-#REGISTRO DE USUARIOS
+#REGISTRO DE USUARIO
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     error = None
@@ -145,14 +145,13 @@ def eliminar(id):
     session.pop('usuario_id')
     return redirect(url_for('login'))
 
-#REGISTRO DE TAREAS
+#REGISTRO DE TAREA
 @app.route('/add_task', methods=['GET', 'POST'])
 def add_task():
     error = None
     conexion = conectar()
     cursor = conexion.cursor(dictionary=True)
 
-    # Obtener opciones desplegables
     cursor.execute("SELECT id, nombre FROM categorias")
     categorias = cursor.fetchall()
 
@@ -170,7 +169,6 @@ def add_task():
         prioridad_id = request.form['prioridad']
         estado_id = 1
 
-        # Aquí suponemos que tienes una sesión activa con el ID del usuario
         usuario_id = session.get('usuario_id')
         if not usuario_id:
             error = "Debes iniciar sesión para agregar una tarea."
@@ -190,14 +188,14 @@ def add_task():
     return render_template('add_task.html', error=error,
                            categorias=categorias, prioridades=prioridades, estados=estados)
 
-#PANEL PRINCIPAL
+#MOSTRAR TAREA
 @app.route('/dashboard')
 def dashboard():
+
     if 'usuario' not in session:
         return redirect(url_for('login'))
-
     usuario_id = session.get('usuario_id')
-
+    filtro = request.args.get('filtro', 'todas') 
     conexion = conectar()
     cursor = conexion.cursor(dictionary=True)
     cursor.execute("""
@@ -211,12 +209,13 @@ def dashboard():
         JOIN estados e ON t.estado_id = e.id
         WHERE t.usuario_id = %s
     """, (usuario_id,))
-    
+
     tareas = cursor.fetchall()
     cursor.close()
     conexion.close()
+    ahora = datetime.now()
+    tareas_filtradas = []
 
-    # Calcular el tiempo restante
     for tarea in tareas:
         fecha_limite = tarea['fecha_limite']
         if isinstance(fecha_limite, str):
@@ -224,17 +223,21 @@ def dashboard():
                 fecha_limite = datetime.strptime(fecha_limite, '%Y-%m-%d %H:%M:%S')
             except ValueError:
                 fecha_limite = datetime.strptime(fecha_limite, '%Y-%m-%d')
-        ahora = datetime.now()
         diferencia = fecha_limite - ahora
         if diferencia.total_seconds() > 0:
             dias = diferencia.days
             horas, resto = divmod(diferencia.seconds, 3600)
             minutos = resto // 60
             tarea['tiempo_restante'] = f"{dias}d {horas}h {minutos}m"
+            tarea['vencida'] = False
         else:
             tarea['tiempo_restante'] = "Vencida"
+            tarea['vencida'] = True
+        if filtro == 'todas' or (filtro == 'vencidas' and tarea['vencida']) or (filtro == 'pendientes' and not tarea['vencida']):
+            tareas_filtradas.append(tarea)
+    tareas_filtradas.sort(key=lambda t: t['fecha_limite'])
 
-    return render_template('dashboard.html', tareas=tareas)
+    return render_template('dashboard.html', tareas=tareas_filtradas, filtro=filtro)
 
 #EDITAR TAREA
 @app.route('/editar_tarea/<int:id>', methods=['GET', 'POST'])
