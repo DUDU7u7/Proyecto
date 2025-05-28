@@ -3,9 +3,9 @@ import mysql.connector
 from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
-app.secret_key = 'clave_secreta'  # Cambiar en producción
+app.secret_key = 'clave_secreta'  #CAMBIAR EN PRODUCCIÓN
 
-# Conexión a la base de datos
+#CONEXIÓN A BD
 def conectar():
     return mysql.connector.connect(
         host='localhost',
@@ -14,7 +14,7 @@ def conectar():
         database='dudulist'
     )
 
-# Página de inicio (login)
+#LOGIN 
 @app.route('/', methods=['GET', 'POST'])
 def login():
     error = None
@@ -40,7 +40,7 @@ def login():
             error = 'Usuario o contraseña incorrectos'
     return render_template('login.html', error=error)
 
-# Registro de nuevos usuarios
+#REGISTRO DE USUARIOS
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     error = None
@@ -77,22 +77,7 @@ def register():
             conexion.close()
     return render_template('register.html', error=error)
 
-# Panel principal
-@app.route('/dashboard')
-def dashboard():
-    if 'usuario' not in session:
-        return redirect(url_for('login'))
-
-    conexion = conectar()
-    cursor = conexion.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM usuarios")
-    usuarios = cursor.fetchall()
-    cursor.close()
-    conexion.close()
-
-    return render_template('dashboard.html', usuarios=usuarios)
-
-# Editar usuario (solo puede editar su propio perfil)
+#EDITAR USUARIO
 @app.route('/editar/<int:id>', methods=['GET', 'POST'])
 def editar(id):
     if 'usuario' not in session:
@@ -140,7 +125,7 @@ def editar(id):
     conexion.close()
     return render_template('edit_user.html', usuario=usuario_data)
 
-# Eliminar usuario (solo puede eliminar su propio perfil)
+#ELIMINAR USUARIO
 @app.route('/eliminar/<int:id>')
 def eliminar(id):
     if 'usuario' not in session:
@@ -159,7 +144,160 @@ def eliminar(id):
     session.pop('usuario_id')
     return redirect(url_for('login'))
 
-# Cerrar sesión
+# REGISTRO DE TAREAS
+@app.route('/add_task', methods=['GET', 'POST'])
+def add_task():
+    error = None
+    conexion = conectar()
+    cursor = conexion.cursor(dictionary=True)
+
+    # Obtener opciones desplegables
+    cursor.execute("SELECT id, nombre FROM categorias")
+    categorias = cursor.fetchall()
+
+    cursor.execute("SELECT id, nombre FROM prioridades")
+    prioridades = cursor.fetchall()
+
+    cursor.execute("SELECT id, nombre FROM estados")
+    estados = cursor.fetchall()
+
+    if request.method == 'POST':
+        titulo = request.form['titulo']
+        descripcion = request.form['descripcion']
+        fecha_limite = request.form['fecha_limite']
+        categoria_id = request.form['categoria']
+        prioridad_id = request.form['prioridad']
+        estado_id = request.form['estado']
+
+        # Aquí suponemos que tienes una sesión activa con el ID del usuario
+        usuario_id = session.get('usuario_id')
+        if not usuario_id:
+            error = "Debes iniciar sesión para agregar una tarea."
+        else:
+            try:
+                cursor.execute("""
+                    INSERT INTO tareas 
+                    (usuario_id, categoria_id, prioridad_id, estado_id, titulo, descripcion, fecha_limite)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s)
+                """, (usuario_id, categoria_id, prioridad_id, estado_id, titulo, descripcion, fecha_limite))
+                conexion.commit()
+                return redirect(url_for('dashboard'))  # Redirige a la lista de tareas, por ejemplo
+            except mysql.connector.Error as e:
+                error = f"Error al registrar tarea: {str(e)}"
+    cursor.close()
+    conexion.close()
+    return render_template('add_task.html', error=error,
+                           categorias=categorias, prioridades=prioridades, estados=estados)
+
+#PANEL PRINCIPAL
+@app.route('/dashboard')
+def dashboard():
+    if 'usuario' not in session:
+        return redirect(url_for('login'))
+
+    usuario_id = session.get('usuario_id')
+
+    conexion = conectar()
+    cursor = conexion.cursor(dictionary=True)
+    cursor.execute("""
+        SELECT t.id, t.titulo, t.descripcion, t.fecha_limite,
+               c.nombre AS categoria,
+               p.nombre AS prioridad,
+               e.nombre AS estado
+        FROM tareas t
+        JOIN categorias c ON t.categoria_id = c.id
+        JOIN prioridades p ON t.prioridad_id = p.id
+        JOIN estados e ON t.estado_id = e.id
+        WHERE t.usuario_id = %s
+    """, (usuario_id,))
+    
+    tareas = cursor.fetchall()
+    cursor.close()
+    conexion.close()
+
+    return render_template('dashboard.html', tareas=tareas)
+
+# EDITAR TAREA
+@app.route('/editar_tarea/<int:id>', methods=['GET', 'POST'])
+def editar_tarea(id):
+    if 'usuario' not in session:
+        return redirect(url_for('login'))
+
+    usuario_id = session.get('usuario_id')
+    conexion = conectar()
+    cursor = conexion.cursor(dictionary=True)
+
+    # Obtener tarea y verificar que sea del usuario actual
+    cursor.execute("SELECT * FROM tareas WHERE id = %s AND usuario_id = %s", (id, usuario_id))
+    tarea = cursor.fetchone()
+    if not tarea:
+        cursor.close()
+        conexion.close()
+        return "Tarea no encontrada o acceso no autorizado", 403
+
+    # Obtener opciones desplegables
+    cursor.execute("SELECT id, nombre FROM categorias")
+    categorias = cursor.fetchall()
+
+    cursor.execute("SELECT id, nombre FROM prioridades")
+    prioridades = cursor.fetchall()
+
+    cursor.execute("SELECT id, nombre FROM estados")
+    estados = cursor.fetchall()
+
+    error = None
+    if request.method == 'POST':
+        titulo = request.form['titulo']
+        descripcion = request.form['descripcion']
+        fecha_limite = request.form['fecha_limite']
+        categoria_id = request.form['categoria']
+        prioridad_id = request.form['prioridad']
+        estado_id = request.form['estado']
+
+        try:
+            cursor.execute("""
+                UPDATE tareas 
+                SET titulo=%s, descripcion=%s, fecha_limite=%s, 
+                    categoria_id=%s, prioridad_id=%s, estado_id=%s
+                WHERE id=%s AND usuario_id=%s
+            """, (titulo, descripcion, fecha_limite, categoria_id, prioridad_id, estado_id, id, usuario_id))
+            conexion.commit()
+            return redirect(url_for('dashboard'))
+        except mysql.connector.Error as e:
+            error = f"Error al actualizar la tarea: {str(e)}"
+
+    cursor.close()
+    conexion.close()
+    return render_template('edit_task.html', tarea=tarea, categorias=categorias, prioridades=prioridades, estados=estados, error=error)
+
+#ELIMINAR TAREA
+# ELIMINAR TAREA
+@app.route('/eliminar_tarea/<int:id>')
+def eliminar_tarea(id):
+    if 'usuario' not in session:
+        return redirect(url_for('login'))
+
+    conexion = conectar()
+    cursor = conexion.cursor()
+
+    # Verificar que la tarea pertenezca al usuario logueado
+    cursor.execute("SELECT * FROM tareas WHERE id = %s AND usuario_id = %s", (id, session['usuario_id']))
+    tarea = cursor.fetchone()
+
+    if tarea is None:
+        cursor.close()
+        conexion.close()
+        return "No tienes permiso para eliminar esta tarea.", 403
+
+    # Eliminar la tarea
+    cursor.execute("DELETE FROM tareas WHERE id = %s", (id,))
+    conexion.commit()
+    cursor.close()
+    conexion.close()
+
+    return redirect(url_for('dashboard')) 
+
+#CERRA SESIÓN
 @app.route('/logout')
 def logout():
     session.pop('usuario', None)

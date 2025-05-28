@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Agregar Tarea</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <h1>Registro de Tarea</h1>
+    {% if error %}
+        <p style="color:red;">{{ error }}</p>
+    {% endif %}
+    <form method="post">
+        <label for="titulo">Título:</label>
+        <input type="text" name="titulo" required>
+        <br><br>
+
+        <label for="descripcion">Descripción:</label>
+        <textarea name="descripcion" rows="4" cols="40"></textarea>
+        <br><br>
+
+        <label for="fecha_limite">Fecha límite:</label>
+        <input type="date" name="fecha_limite">
+        <br><br>
+
+        <label for="categoria">Categoría:</label>
+        <select name="categoria" required>
+            {% for cat in categorias %}
+                <option value="{{ cat.id }}">{{ cat.nombre }}</option>
+            {% endfor %}
+        </select>
+        <br><br>
+
+        <label for="prioridad">Prioridad:</label>
+        <select name="prioridad" required>
+            {% for prio in prioridades %}
+                <option value="{{ prio.id }}">{{ prio.nombre }}</option>
+            {% endfor %}
+        </select>
+        <br><br>
+
+        <label for="estado">Estado:</label>
+        <select name="estado" required>
+            {% for est in estados %}
+                <option value="{{ est.id }}">{{ est.nombre }}</option>
+            {% endfor %}
+        </select>
+        <br><br>
+
+        <input type="submit" value="Guardar Tarea">
+    </form>
+    <p><a href="{{ url_for('dashboard') }}">Volver a la lista de tareas</a></p>
+</body>
+</html>
