@@ -20,8 +20,9 @@
         <br><br>
 
         <label for="fecha_limite">Fecha límite:</label>
-        <input type="date" name="fecha_limite">
+        <input type="datetime-local" name="fecha_limite" required>
         <br><br>
+
 
         <label for="categoria">Categoría:</label>
         <select name="categoria" required>
@@ -35,14 +36,6 @@
         <select name="prioridad" required>
             {% for prio in prioridades %}
                 <option value="{{ prio.id }}">{{ prio.nombre }}</option>
-            {% endfor %}
-        </select>
-        <br><br>
-
-        <label for="estado">Estado:</label>
-        <select name="estado" required>
-            {% for est in estados %}
-                <option value="{{ est.id }}">{{ est.nombre }}</option>
             {% endfor %}
         </select>
         <br><br>

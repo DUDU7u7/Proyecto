@@ -20,8 +20,10 @@
         <br><br>
 
         <label for="fecha_limite">Fecha límite:</label>
-        <input type="date" name="fecha_limite" value="{{ tarea.fecha_limite|safe }}" required>
+        <input type="datetime-local" name="fecha_limite"
+        value="{{ tarea.fecha_limite.strftime('%Y-%m-%dT%H:%M') if tarea.fecha_limite else '' }}" required>
         <br><br>
+
 
         <label for="categoria">Categoría:</label>
         <select name="categoria" required>

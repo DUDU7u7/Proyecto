@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, session
 import mysql.connector
 from werkzeug.security import generate_password_hash, check_password_hash
+from datetime import datetime
 
 app = Flask(__name__)
 app.secret_key = 'clave_secreta'  #CAMBIAR EN PRODUCCIÓN
@@ -144,7 +145,7 @@ def eliminar(id):
     session.pop('usuario_id')
     return redirect(url_for('login'))
 
-# REGISTRO DE TAREAS
+#REGISTRO DE TAREAS
 @app.route('/add_task', methods=['GET', 'POST'])
 def add_task():
     error = None
@@ -167,7 +168,7 @@ def add_task():
         fecha_limite = request.form['fecha_limite']
         categoria_id = request.form['categoria']
         prioridad_id = request.form['prioridad']
-        estado_id = request.form['estado']
+        estado_id = 1
 
         # Aquí suponemos que tienes una sesión activa con el ID del usuario
         usuario_id = session.get('usuario_id')
@@ -215,9 +216,27 @@ def dashboard():
     cursor.close()
     conexion.close()
 
+    # Calcular el tiempo restante
+    for tarea in tareas:
+        fecha_limite = tarea['fecha_limite']
+        if isinstance(fecha_limite, str):
+            try:
+                fecha_limite = datetime.strptime(fecha_limite, '%Y-%m-%d %H:%M:%S')
+            except ValueError:
+                fecha_limite = datetime.strptime(fecha_limite, '%Y-%m-%d')
+        ahora = datetime.now()
+        diferencia = fecha_limite - ahora
+        if diferencia.total_seconds() > 0:
+            dias = diferencia.days
+            horas, resto = divmod(diferencia.seconds, 3600)
+            minutos = resto // 60
+            tarea['tiempo_restante'] = f"{dias}d {horas}h {minutos}m"
+        else:
+            tarea['tiempo_restante'] = "Vencida"
+
     return render_template('dashboard.html', tareas=tareas)
 
-# EDITAR TAREA
+#EDITAR TAREA
 @app.route('/editar_tarea/<int:id>', methods=['GET', 'POST'])
 def editar_tarea(id):
     if 'usuario' not in session:
@@ -271,7 +290,6 @@ def editar_tarea(id):
     return render_template('edit_task.html', tarea=tarea, categorias=categorias, prioridades=prioridades, estados=estados, error=error)
 
 #ELIMINAR TAREA
-# ELIMINAR TAREA
 @app.route('/eliminar_tarea/<int:id>')
 def eliminar_tarea(id):
     if 'usuario' not in session:
