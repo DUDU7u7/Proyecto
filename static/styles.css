@@ -1,13 +1,18 @@
+/* Estilo general */
 body {
     font-family: Arial, sans-serif;
     background-color: #f4f4f4;
     text-align: center;
+    margin: 0;
+    padding: 0;
 }
 
 h1, h2 {
     color: #333;
+    margin-top: 20px;
 }
 
+/* Estilo para formularios */
 form {
     background-color: #ffffff;
     padding: 20px;
@@ -15,35 +20,53 @@ form {
     border-radius: 5px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     display: inline-block;
+    text-align: left;
 }
 
-label {
+/* Etiquetas y campos */
+form label {
     display: block;
-    margin-top: 10px;
+    margin: 10px 0 5px 0;
 }
 
 input[type="text"],
 input[type="password"],
 input[type="email"],
-input[type="number"] {
+input[type="number"],
+input[type="datetime-local"],
+select,
+textarea {
     padding: 8px;
-    width: 200px;
+    width: 220px;
     margin-top: 5px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
 }
 
-input[type="submit"] {
+/* Textarea específico */
+textarea {
+    resize: vertical;
+}
+
+/* Botones */
+input[type="submit"],
+button {
     background-color: #5cb85c;
     color: white;
     padding: 10px 20px;
+    margin-top: 15px;
     border: none;
     border-radius: 5px;
     cursor: pointer;
 }
 
-input[type="submit"]:hover {
+input[type="submit"]:hover,
+button:hover {
     background-color: #4cae4c;
 }
 
+/* Enlaces */
 a {
     color: #007bff;
     text-decoration: none;
@@ -53,13 +76,72 @@ a:hover {
     text-decoration: underline;
 }
 
-table {
-    border-collapse: collapse;
-    width: 80%;
+/* Botón tipo enlace */
+.btn {
+    background-color: #0275d8;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 5px;
+    display: inline-block;
     margin-top: 20px;
 }
 
+.btn:hover {
+    background-color: #025aa5;
+}
+
+/* Tabla */
+table {
+    border-collapse: collapse;
+    width: 90%;
+    margin: 20px auto;
+    background-color: #fff;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+}
+
 th, td {
-    padding: 10px;
+    padding: 12px;
     border: 1px solid #ccc;
+    text-align: center;
+}
+
+th {
+    background-color: #f2f2f2;
+}
+
+/* Fila vencida */
+tr[style*="background-color: #f8d7da;"] {
+    background-color: #f8d7da !important;
+}
+
+/* Botones de acción */
+.action-btn {
+    margin: 0 5px;
+    padding: 5px 10px;
+    border-radius: 3px;
+    color: white;
+    text-decoration: none;
+    font-size: 0.9em;
+}
+
+.edit-btn {
+    background-color: #0275d8;
+}
+
+.edit-btn:hover {
+    background-color: #025aa5;
+}
+
+.delete-btn {
+    background-color: #d9534f;
+}
+
+.delete-btn:hover {
+    background-color: #c9302c;
+}
+
+/* Filtro centrado */
+form[method="get"] {
+    margin-bottom: 20px;
+    display: inline-block;
 }

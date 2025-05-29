@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Agregar Tarea</title>
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}">
     <link rel="stylesheet" href="/static/styles.css">
 </head>
 <body>
@@ -16,7 +17,7 @@
         <br><br>
 
         <label for="descripcion">Descripción:</label>
-        <textarea name="descripcion" rows="4" cols="40"></textarea>
+        <textarea name="descripcion" required rows="4" cols="40"></textarea>
         <br><br>
 
         <label for="fecha_limite">Fecha límite:</label>
@@ -42,6 +43,6 @@
 
         <input type="submit" value="Guardar Tarea">
     </form>
-    <p><a href="{{ url_for('dashboard') }}">Volver a la lista de tareas</a></p>
+    <p><a href="{{ url_for('dashboard') }}" class="btn">Volver al panel</a></p>
 </body>
 </html>

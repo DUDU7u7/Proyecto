@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Mis Tareas</title>
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}">
     <link rel="stylesheet" href="/static/styles.css">
 </head>
 <body>
@@ -20,39 +21,46 @@
         <button type="submit">Aplicar</button>
     </form>
 
-    <table border="1" style="margin: 0 auto;">
-        <thead>
-            <tr>
-                <th>Título</th>
-                <th>Descripción</th>
-                <th>Tiempo restante</th>
-                <th>Fecha Límite</th>
-                <th>Categoría</th>
-                <th>Prioridad</th>
-                <th>Estado</th>
-                <th>Acciones</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for tarea in tareas %}
-            <tr>
-                <td>{{ tarea.titulo }}</td>
-                <td>{{ tarea.descripcion }}</td>
-                <td>{{ tarea.tiempo_restante }}</td>
-                <td>{{ tarea.fecha_limite }}</td>
-                <td>{{ tarea.categoria }}</td>
-                <td>{{ tarea.prioridad }}</td>
-                <td>{{ tarea.estado }}</td>
-                <td>
-                    <a href="{{ url_for('editar_tarea', id=tarea.id) }}">Editar</a> |
-                    <a href="{{ url_for('eliminar_tarea', id=tarea.id) }}" onclick="return confirm('¿Eliminar esta tarea?')">Eliminar</a>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    {% if tareas %}
+        <table border="1" style="margin: 0 auto;">
+            <thead>
+                <tr>
+                    <th>Título</th>
+                    <th>Descripción</th>
+                    <th>Tiempo restante</th>
+                    <th>Fecha Límite</th>
+                    <th>Categoría</th>
+                    <th>Prioridad</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for tarea in tareas %}
+                <tr {% if tarea.tiempo_restante == 'Vencida' %}style="background-color: #f8d7da;"{% endif %}>
+                    <td>{{ tarea.titulo }}</td>
+                    <td>{{ tarea.descripcion }}</td>
+                    <td>{{ tarea.tiempo_restante }}</td>
+                    <td>{{ tarea.fecha_limite }}</td>
+                    <td>{{ tarea.categoria }}</td>
+                    <td>{{ tarea.prioridad }}</td>
+                    <td>{{ tarea.estado }}</td>
+                    <td>
+                        <a href="{{ url_for('editar_tarea', id=tarea.id) }}" class="action-btn edit-btn">Editar</a> |
+                        <a href="{{ url_for('eliminar_tarea', id=tarea.id) }}" class="action-btn delete-btn"
+                           onclick="return confirm('¿Eliminar esta tarea?')">Eliminar</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No hay tareas registradas.</p>
+    {% endif %}
+
     <br>
     <a href="{{ url_for('add_task') }}">Agregar nueva tarea</a> |
     <a href="{{ url_for('logout') }}">Cerrar sesión</a>
 </body>
+
 </html>
