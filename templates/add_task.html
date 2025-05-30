@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <title>Agregar Tarea</title>
-    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}">
     <link rel="stylesheet" href="/static/styles.css">
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}">
 </head>
 <body>
     <h1>Registro de Tarea</h1>
@@ -17,13 +17,12 @@
         <br><br>
 
         <label for="descripcion">Descripción:</label>
-        <textarea name="descripcion" required rows="4" cols="40"></textarea>
+        <textarea name="descripcion" rows="4" cols="40" required></textarea>
         <br><br>
 
         <label for="fecha_limite">Fecha límite:</label>
         <input type="datetime-local" name="fecha_limite" required>
         <br><br>
-
 
         <label for="categoria">Categoría:</label>
         <select name="categoria" required>
@@ -44,5 +43,28 @@
         <input type="submit" value="Guardar Tarea">
     </form>
     <p><a href="{{ url_for('dashboard') }}" class="btn">Volver al panel</a></p>
+
+    <script>
+    document.querySelector("form").addEventListener("submit", function (e) {
+        const titulo = document.querySelector('input[name="titulo"]').value.trim();
+        const descripcion = document.querySelector('textarea[name="descripcion"]').value.trim();
+        const fechaLimite = document.querySelector('input[name="fecha_limite"]').value;
+        const categoria = document.querySelector('select[name="categoria"]').value;
+        const prioridad = document.querySelector('select[name="prioridad"]').value;
+
+        let errores = [];
+
+        if (!titulo) errores.push("El título es obligatorio.");
+        if (!descripcion) errores.push("La descripción es obligatoria.");
+        if (!fechaLimite || new Date(fechaLimite) < new Date()) errores.push("La fecha límite debe ser una fecha futura.");
+        if (!categoria) errores.push("Debe seleccionar una categoría.");
+        if (!prioridad) errores.push("Debe seleccionar una prioridad.");
+
+        if (errores.length > 0) {
+            e.preventDefault();
+            alert(errores.join("\n"));
+        }
+    });
+    </script>
 </body>
 </html>

@@ -11,7 +11,7 @@
     {% if error %}
         <p style="color:red;">{{ error }}</p>
     {% endif %}
-    <form method="post">
+    <form method="post" id="formRegistro" novalidate>
         <label for="nombre">Nombre completo:</label>
         <input type="text" name="nombre" required>
         <br><br>
@@ -35,5 +35,28 @@
         <input type="submit" value="Registrarse">
     </form>
     <p>¿Ya tienes cuenta? <a href="{{ url_for('login') }}">Inicia sesión</a></p>
+
+    <script>
+        document.getElementById('formRegistro').addEventListener('submit', function (e) {
+            const nombre = document.querySelector('input[name="nombre"]').value.trim();
+            const usuario = document.querySelector('input[name="usuario"]').value.trim();
+            const email = document.querySelector('input[name="email"]').value.trim();
+            const password = document.querySelector('input[name="password"]').value.trim();
+            const fdn = document.querySelector('input[name="fdn"]').value;
+
+            let errores = [];
+
+            if (nombre === '') errores.push("Nombre completo es obligatorio.");
+            if (usuario === '') errores.push("Nombre de usuario es obligatorio.");
+            if (email === '' || !email.includes('@')) errores.push("Correo electrónico inválido.");
+            if (password.length < 6) errores.push("La contraseña debe tener al menos 6 caracteres.");
+            if (fdn === '') errores.push("Fecha de nacimiento es obligatoria.");
+
+            if (errores.length > 0) {
+                e.preventDefault();
+                alert(errores.join("\n"));
+            }
+        });
+    </script>
 </body>
 </html>
