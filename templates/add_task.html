@@ -7,6 +7,7 @@
     <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}">
 </head>
 <body>
+    <div class="contenedor">
     <h1>Registro de Tarea</h1>
     {% if error %}
         <p style="color:red;">{{ error }}</p>
@@ -66,5 +67,6 @@
         }
     });
     </script>
+    </div>
 </body>
 </html>

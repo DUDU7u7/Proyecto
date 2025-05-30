@@ -7,7 +7,8 @@
     <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}">
 </head>
 <body>
-    <h1>Editar Información de Usuario</h1>
+    <div class="contenedor">
+    <h1 class="escritura">¿Encontraste algo mejor?<br>Cuentanos!!</h1>
     {% if error %}
         <p style="color:red;">{{ error }}</p>
     {% endif %}
@@ -58,5 +59,6 @@
         }
     });
     </script>
+    </div>
 </body>
 </html>

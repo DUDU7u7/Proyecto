@@ -1,7 +1,11 @@
+
+@import url('https://fonts.googleapis.com/css2?family=Delius&display=swap');
+
 /* Estilo general */
 body {
-    font-family: Arial, sans-serif;
-    background-color: #f4f4f4;
+  font-family: 'Playwrite HU', cursive;
+  font-weight: 300;
+    background: linear-gradient(to bottom, #e0eafc, #cfdef3);
     text-align: center;
     margin: 0;
     padding: 0;
@@ -144,4 +148,46 @@ tr[style*="background-color: #f8d7da;"] {
 form[method="get"] {
     margin-bottom: 20px;
     display: inline-block;
+}
+
+.escritura {
+    overflow: hidden;
+    border-right: .15em solid #3355aa;
+    white-space: nowrap;
+    margin: 0 auto;
+    letter-spacing: .1em;
+    animation: typing 2s steps(20, end), blink-caret 0.75s step-end infinite;
+    width: 100%;
+    display: block;
+    font-weight: bold;
+    color: #3355aa;
+}
+
+@keyframes typing {
+  from { width: 0; }
+  to { width: 100%; }
+}
+
+@keyframes blink-caret {
+  from, to { border-color: transparent; }
+  50% { border-color: #3355aa; }
+}
+
+.contenedor {
+    max-width: 500px;
+    margin: 80px auto;
+    background-color: #fff;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 8px 20px rgba(0, 1, 0, 0.1);
+    animation: fadeIn 1s ease-in-out;
+}
+
+.fade-in {
+    animation: fadeIn 1s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
 }

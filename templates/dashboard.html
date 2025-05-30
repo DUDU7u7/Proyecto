@@ -14,6 +14,7 @@
     </style>
 </head>
 <body>
+    <div class="fade-in">
     <h1>Bienvenido {{ session['usuario'] }}</h1>
     <h2>Listado de Tareas</h2>
      <div style="text-align: right; margin-right: 20px;">        
@@ -72,6 +73,7 @@
     <br>
     <a href="{{ url_for('add_task') }}" class="btn">Agregar nueva tarea</a> |
     <a href="{{ url_for('logout') }}" class="btn">Cerrar sesión</a>
+        </div>
 </body>
 
 </html>
