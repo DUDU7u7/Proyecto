@@ -14,25 +14,31 @@
     </style>
 </head>
 <body>
-    <div class="fade-in">
-    <h1>Bienvenido {{ session['usuario'] }}</h1>
-    <h2>Listado de Tareas</h2>
-     <div style="text-align: right; margin-right: 20px;">        
-        <a href="{{ url_for('editar_usuario') }}" class="btn">Editar Usuario</a>
+<div class="ribbon">
+    <div class="left-section">
+        <span class="bienvenida">Bienvenido {{ session['usuario'] }}</span>
     </div>
-
-
-    <!-- Formulario de Filtro -->
-    <form method="get" action="{{ url_for('dashboard') }}" style="text-align: center; margin-bottom: 20px;">
-        <label>Filtrar:</label>
-        <select name="filtro">
+    <div class="right-section">
+    <a href="{{ url_for('add_task') }}" class="btn">Agregar nueva tarea</a>
+    <form method="get" action="{{ url_for('dashboard') }}" class="filter-form">
+        <label for="filtro">Filtrar:</label>
+        <select name="filtro" id="filtro">
             <option value="todas" {% if filtro == 'todas' %}selected{% endif %}>Todas</option>
             <option value="pendientes" {% if filtro == 'pendientes' %}selected{% endif %}>No vencidas</option>
+            <option value="completas" {% if filtro == 'completas' %}selected{% endif %}>Completas</option>
             <option value="vencidas" {% if filtro == 'vencidas' %}selected{% endif %}>Vencidas</option>
         </select>
         <button type="submit">Aplicar</button>
     </form>
+    <div class="vertical-divider"></div>
+    <a href="{{ url_for('editar_usuario') }}" class="btn">Editar Usuario</a>
+    <a href="{{ url_for('logout') }}" class="btn">Cerrar sesión</a>
+</div>
+</div>
 
+<h2>Listado de Tareas</h2>
+
+<div class="fade-in">
     {% if tareas %}
         <table>
             <thead>
@@ -49,7 +55,8 @@
             </thead>
             <tbody>
                 {% for tarea in tareas %}
-                <tr {% if tarea.tiempo_restante == 'Vencida' %}style="background-color: #f8d7da;"{% endif %}>
+                <tr {% if tarea.tiempo_restante == 'Vencida' %}style="background-color: #f8d7da;"{% endif %}
+                and {% if tarea.estado == 'Completada' %}style="background-color:rgb(218, 248, 215);"{% endif %}>
                     <td>{{ tarea.titulo }}</td>
                     <td>{{ tarea.descripcion }}</td>
                     <td>{{ tarea.tiempo_restante }}</td>
@@ -58,6 +65,7 @@
                     <td>{{ tarea.prioridad }}</td>
                     <td>{{ tarea.estado }}</td>
                     <td class="action-cell">
+                        <a href="{{ url_for('completar_tarea', id=tarea.id) }}" class="action-btn complete-btn">Completada</a> |
                         <a href="{{ url_for('editar_tarea', id=tarea.id) }}" class="action-btn edit-btn">Editar</a> |
                         <a href="{{ url_for('eliminar_tarea', id=tarea.id) }}" class="action-btn delete-btn"
                            onclick="return confirm('¿Eliminar esta tarea?')">Eliminar</a>
@@ -69,11 +77,8 @@
     {% else %}
         <p>No hay tareas registradas.</p>
     {% endif %}
-
-    <br>
-    <a href="{{ url_for('add_task') }}" class="btn">Agregar nueva tarea</a> |
-    <a href="{{ url_for('logout') }}" class="btn">Cerrar sesión</a>
-        </div>
+</div>
 </body>
+
 
 </html>

@@ -201,13 +201,14 @@ def add_task():
 #MOSTRAR TAREA
 @app.route('/dashboard')
 def dashboard():
-
     if 'usuario' not in session:
         return redirect(url_for('login'))
+
     usuario_id = session.get('usuario_id')
     filtro = request.args.get('filtro', 'todas') 
     conexion = conectar()
     cursor = conexion.cursor(dictionary=True)
+
     cursor.execute("""
         SELECT t.id, t.titulo, t.descripcion, t.fecha_limite,
                c.nombre AS categoria,
@@ -223,6 +224,7 @@ def dashboard():
     tareas = cursor.fetchall()
     cursor.close()
     conexion.close()
+
     ahora = datetime.now()
     tareas_filtradas = []
 
@@ -233,6 +235,7 @@ def dashboard():
                 fecha_limite = datetime.strptime(fecha_limite, '%Y-%m-%d %H:%M:%S')
             except ValueError:
                 fecha_limite = datetime.strptime(fecha_limite, '%Y-%m-%d')
+
         diferencia = fecha_limite - ahora
         if diferencia.total_seconds() > 0:
             dias = diferencia.days
@@ -243,8 +246,15 @@ def dashboard():
         else:
             tarea['tiempo_restante'] = "Vencida"
             tarea['vencida'] = True
-        if filtro == 'todas' or (filtro == 'vencidas' and tarea['vencida']) or (filtro == 'pendientes' and not tarea['vencida']):
+
+        if (
+            filtro == 'todas' or
+            (filtro == 'vencidas' and tarea['vencida']) or
+            (filtro == 'pendientes' and not tarea['vencida'] and tarea['estado'] != 'Completada') or
+            (filtro == 'completas' and tarea['estado'] == 'Completada')
+        ):
             tareas_filtradas.append(tarea)
+
     tareas_filtradas.sort(key=lambda t: t['fecha_limite'])
 
     return render_template('dashboard.html', tareas=tareas_filtradas, filtro=filtro)
@@ -301,6 +311,33 @@ def editar_tarea(id):
     cursor.close()
     conexion.close()
     return render_template('edit_task.html', tarea=tarea, categorias=categorias, prioridades=prioridades, estados=estados, error=error)
+
+@app.route('/completar_tarea/<int:id>')
+def completar_tarea(id):
+    if 'usuario' not in session:
+        return redirect(url_for('login'))
+
+    conexion = conectar()
+    cursor = conexion.cursor()
+
+    # Verificar que la tarea pertenezca al usuario logueado
+    cursor.execute("SELECT * FROM tareas WHERE id = %s AND usuario_id = %s", (id, session['usuario_id']))
+    tarea = cursor.fetchone()
+
+    if tarea is None:
+        cursor.close()
+        conexion.close()
+        return "No tienes permiso para completar esta tarea.", 403
+
+    # Cambiar el estado_id de la tarea a 'Completada'
+    cursor.execute("UPDATE tareas SET estado_id = %s WHERE id = %s", (3, id))  # Asegúrate que 3 sea el ID correcto
+    conexion.commit()
+
+    cursor.close()
+    conexion.close()
+
+    return redirect(url_for('dashboard'))
+
 
 #ELIMINAR TAREA
 @app.route('/eliminar_tarea/<int:id>')
