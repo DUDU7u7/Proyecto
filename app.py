@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, redirect, url_for, session
 import mysql.connector
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
+from functools import wraps
 
 app = Flask(__name__)
 app.secret_key = 'clave_secreta'  #CAMBIAR EN PRODUCCIÓN
@@ -14,6 +15,15 @@ def conectar():
         password='',
         database='dudulist'
     )
+
+# # Decorador para verificar si el usuario está logueado
+# def login_required(f):
+#     @wraps(f)
+#     def decorated_function(*args, **kwargs):
+#         if 'usuario_id' not in session:
+#             return redirect(url_for('login'))
+#         return f(*args, **kwargs)
+#     return decorated_function
 
 #INGRESO DE USUARIO
 @app.route('/', methods=['GET', 'POST'])
@@ -324,6 +334,73 @@ def logout():
     session.pop('usuario', None)
     session.pop('usuario_id', None)
     return redirect(url_for('login'))
+
+@app.route('/editar_usuario', methods=['GET', 'POST'])
+def editar_usuario():
+    if 'usuario_id' not in session:
+        return redirect(url_for('login'))
+
+    conexion = conectar()
+    cursor = conexion.cursor(dictionary=True)
+
+    usuario_id = session['usuario_id']
+
+    if request.method == 'POST':
+        nombre = request.form['nombre']
+        usuario = request.form['usuario']
+        email = request.form['email']
+        fecha_nacimiento = request.form.get('fdn')
+        nueva_password = request.form.get('password')
+
+        # Validar que no exista otro usuario con el mismo usuario o email (excepto el actual)
+        cursor.execute(
+            "SELECT * FROM usuarios WHERE (usuario=%s OR email=%s) AND id != %s",
+            (usuario, email, usuario_id)
+        )
+        existe = cursor.fetchone()
+        if existe:
+            cursor.close()
+            conexion.close()
+            error = "El nombre de usuario o correo ya están en uso por otro usuario."
+            # Recargar datos para el form
+            conexion = conectar()
+            cursor = conexion.cursor(dictionary=True)
+            cursor.execute("SELECT * FROM usuarios WHERE id = %s", (usuario_id,))
+            usuario_data = cursor.fetchone()
+            cursor.close()
+            conexion.close()
+            return render_template('edit_user.html', usuario=usuario_data, error=error)
+
+        # Actualizar datos
+        if nueva_password:
+            from werkzeug.security import generate_password_hash
+            password_hash = generate_password_hash(nueva_password)
+            cursor.execute(
+                "UPDATE usuarios SET nombre=%s, usuario=%s, email=%s, password=%s, fdn=%s WHERE id=%s",
+                (nombre, usuario, email, password_hash, fecha_nacimiento, usuario_id)
+            )
+        else:
+            cursor.execute(
+                "UPDATE usuarios SET nombre=%s, usuario=%s, email=%s, fdn=%s WHERE id=%s",
+                (nombre, usuario, email, fecha_nacimiento, usuario_id)
+            )
+
+        conexion.commit()
+        cursor.close()
+        conexion.close()
+
+        # Actualizar sesión si cambió el usuario
+        session['usuario'] = usuario
+
+        return redirect(url_for('dashboard'))
+
+    # GET: obtener datos del usuario para mostrar en el formulario
+    cursor.execute("SELECT * FROM usuarios WHERE id = %s", (usuario_id,))
+    usuario_data = cursor.fetchone()
+    cursor.close()
+    conexion.close()
+
+    return render_template('edit_user.html', usuario=usuario_data)
 
 if __name__ == '__main__':
     app.run(debug=True)
