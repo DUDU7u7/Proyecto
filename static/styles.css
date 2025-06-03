@@ -13,12 +13,14 @@ body {
 
 
 h1, h2 {
+    font-family: 'Montserrat', sans-serif;
     color: #333;
     margin-top: 20px;
 }
 
 /* Estilo para formularios */
 form {
+    font-family: 'Montserrat', sans-serif;
     background-color: #ffffff;
     padding: 20px;
     margin: 50px auto;
@@ -30,6 +32,7 @@ form {
 
 /* Etiquetas y campos */
 form label {
+    font-family: 'Montserrat', sans-serif;
     display: block;
     margin: 10px 0 5px 0;
 }
@@ -41,6 +44,7 @@ input[type="number"],
 input[type="datetime-local"],
 select,
 textarea {
+    font-family: 'Montserrat', sans-serif;
     padding: 8px;
     width: 220px;
     margin-top: 5px;
@@ -51,12 +55,14 @@ textarea {
 
 /* Textarea específico */
 textarea {
+    font-family: 'Montserrat', sans-serif;
     resize: vertical;
 }
 
 /* Botones */
 input[type="submit"],
 button {
+    font-family: 'Montserrat', sans-serif;
     background-color: #5cb85c;
     color: white;
     padding: 10px 20px;
@@ -68,21 +74,25 @@ button {
 
 input[type="submit"]:hover,
 button:hover {
+    font-family: 'Montserrat', sans-serif;
     background-color: #4cae4c;
 }
 
 /* Enlaces */
 a {
+    font-family: 'Montserrat', sans-serif;
     color: #007bff;
     text-decoration: none;
 }
 
 a:hover {
+    font-family: 'Montserrat', sans-serif;
     text-decoration: underline;
 }
 
 /* Botón tipo enlace */
 .btn {
+    font-family: 'Montserrat', sans-serif;
     background-color: #0275d8;
     color: white;
     padding: 10px 20px;
