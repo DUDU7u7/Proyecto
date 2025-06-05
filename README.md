@@ -35,6 +35,7 @@ CREATE TABLE tareas (
     descripcion TEXT,
     fecha_limite DATETIME,
     fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    visible BOOLEAN DEFAULT TRUE,
     FOREIGN KEY (usuario_id) REFERENCES usuarios(id),
     FOREIGN KEY (categoria_id) REFERENCES categorias(id),
     FOREIGN KEY (prioridad_id) REFERENCES prioridades(id),

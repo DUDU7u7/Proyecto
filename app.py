@@ -5,7 +5,7 @@ from datetime import datetime
 from functools import wraps
 
 app = Flask(__name__)
-app.secret_key = 'clave_secreta'  #CAMBIAR EN PRODUCCIÓN
+app.secret_key = 'clave_secreta' 
 
 #CONEXIÓN A BD
 def conectar():
@@ -15,15 +15,6 @@ def conectar():
         password='',
         database='dudulist'
     )
-
-# # Decorador para verificar si el usuario está logueado
-# def login_required(f):
-#     @wraps(f)
-#     def decorated_function(*args, **kwargs):
-#         if 'usuario_id' not in session:
-#             return redirect(url_for('login'))
-#         return f(*args, **kwargs)
-#     return decorated_function
 
 #INGRESO DE USUARIO
 @app.route('/', methods=['GET', 'POST'])
@@ -218,7 +209,7 @@ def dashboard():
         JOIN categorias c ON t.categoria_id = c.id
         JOIN prioridades p ON t.prioridad_id = p.id
         JOIN estados e ON t.estado_id = e.id
-        WHERE t.usuario_id = %s
+        WHERE t.usuario_id = %s AND t.visible = TRUE
     """, (usuario_id,))
 
     tareas = cursor.fetchall()
@@ -312,6 +303,7 @@ def editar_tarea(id):
     conexion.close()
     return render_template('edit_task.html', tarea=tarea, categorias=categorias, prioridades=prioridades, estados=estados, error=error)
 
+#COMPLETAR TAREA
 @app.route('/completar_tarea/<int:id>')
 def completar_tarea(id):
     if 'usuario' not in session:
@@ -338,7 +330,6 @@ def completar_tarea(id):
 
     return redirect(url_for('dashboard'))
 
-
 #ELIMINAR TAREA
 @app.route('/eliminar_tarea/<int:id>')
 def eliminar_tarea(id):
@@ -363,7 +354,100 @@ def eliminar_tarea(id):
     cursor.close()
     conexion.close()
 
-    return redirect(url_for('dashboard')) 
+    return redirect(url_for('tareas_ocultas')) 
+
+#OCULTAR TAREA
+@app.route('/ocultar_tarea/<int:id>')
+def ocultar_tarea(id):
+    if 'usuario' not in session:
+        return redirect(url_for('login'))
+
+    conexion = conectar()
+    cursor = conexion.cursor()
+
+    cursor.execute("SELECT * FROM tareas WHERE id = %s AND usuario_id = %s", (id, session['usuario_id']))
+    tarea = cursor.fetchone()
+
+    if tarea is None:
+        cursor.close()
+        conexion.close()
+        return "No tienes permiso para ocultar esta tarea.", 403
+
+    cursor.execute("UPDATE tareas SET visible = FALSE WHERE id = %s", (id,))
+    conexion.commit()
+    cursor.close()
+    conexion.close()
+
+    return redirect(url_for('dashboard'))
+
+#RESTAURAR TAREA
+@app.route('/restaurar_tarea/<int:id>')
+def restaurar_tarea(id):
+    if 'usuario' not in session:
+        return redirect(url_for('login'))
+
+    conexion = conectar()
+    cursor = conexion.cursor()
+
+    cursor.execute("SELECT * FROM tareas WHERE id = %s AND usuario_id = %s", (id, session['usuario_id']))
+    tarea = cursor.fetchone()
+
+    if tarea is None:
+        cursor.close()
+        conexion.close()
+        return "No tienes permiso para ocultar esta tarea.", 403
+
+    cursor.execute("UPDATE tareas SET visible = TRUE WHERE id = %s", (id,))
+    conexion.commit()
+    cursor.close()
+    conexion.close()
+
+    return redirect(url_for('dashboard'))
+
+#MOSTRAR TAREAS OCULTAS
+@app.route('/tareas_ocultas')
+def tareas_ocultas():
+    if 'usuario' not in session:
+        return redirect(url_for('login'))
+
+    usuario_id = session.get('usuario_id')
+    conexion = conectar()
+    cursor = conexion.cursor(dictionary=True)
+
+    cursor.execute("""
+        SELECT t.id, t.titulo, t.descripcion, t.fecha_limite,
+               c.nombre AS categoria,
+               p.nombre AS prioridad,
+               e.nombre AS estado
+        FROM tareas t
+        JOIN categorias c ON t.categoria_id = c.id
+        JOIN prioridades p ON t.prioridad_id = p.id
+        JOIN estados e ON t.estado_id = e.id
+        WHERE t.usuario_id = %s AND t.visible = FALSE
+    """, (usuario_id,))
+
+    tareas = cursor.fetchall()
+    cursor.close()
+    conexion.close()
+
+    ahora = datetime.now()
+    for tarea in tareas:
+        fecha_limite = tarea['fecha_limite']
+        if isinstance(fecha_limite, str):
+            try:
+                fecha_limite = datetime.strptime(fecha_limite, '%Y-%m-%d %H:%M:%S')
+            except ValueError:
+                fecha_limite = datetime.strptime(fecha_limite, '%Y-%m-%d')
+        diferencia = fecha_limite - ahora
+        if diferencia.total_seconds() > 0:
+            dias = diferencia.days
+            horas, resto = divmod(diferencia.seconds, 3600)
+            minutos = resto // 60
+            tarea['tiempo_restante'] = f"{dias}d {horas}h {minutos}m"
+        else:
+            tarea['tiempo_restante'] = "Vencida"
+
+    return render_template('tareas_ocultas.html', tareas=tareas)
 
 #CERRA SESIÓN
 @app.route('/logout')
@@ -372,6 +456,7 @@ def logout():
     session.pop('usuario_id', None)
     return redirect(url_for('login'))
 
+#EDITAR USUARIO
 @app.route('/editar_usuario', methods=['GET', 'POST'])
 def editar_usuario():
     if 'usuario_id' not in session:

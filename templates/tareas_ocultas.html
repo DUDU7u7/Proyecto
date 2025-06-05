@@ -19,8 +19,6 @@
         <span class="bienvenida">Bienvenido {{ session['usuario'] }}</span>
     </div>
     <div class="right-section">
-    <a href="{{ url_for('add_task') }}" class="btn">Agregar nueva tarea</a>
-    <a href="{{ url_for('tareas_ocultas') }}" class="btn">Ver tareas eliminadas</a>
     <form method="get" action="{{ url_for('dashboard') }}" class="filter-form">
         <label for="filtro">Filtrar:</label>
         <select name="filtro" id="filtro">
@@ -37,7 +35,7 @@
 </div>
 </div>
 
-<h2>Listado de Tareas</h2>
+<h2>Tareas eliminadas</h2>
 
 <div class="fade-in">
     {% if tareas %}
@@ -66,18 +64,22 @@
                     <td>{{ tarea.prioridad }}</td>
                     <td>{{ tarea.estado }}</td>
                     <td class="action-cell">
-                        <a href="{{ url_for('completar_tarea', id=tarea.id) }}" class="action-btn complete-btn">Completada</a> |
-                        <a href="{{ url_for('editar_tarea', id=tarea.id) }}" class="action-btn edit-btn">Editar</a> |
-                        <a href="{{ url_for('ocultar_tarea', id=tarea.id) }}" class="action-btn delete-btn"
-                           onclick="return confirm('¿Eliminar esta tarea?')">Eliminar</a>
+                        <a href="{{ url_for('restaurar_tarea', id=tarea.id) }}" class="action-btn edit-btn">Restaurar</a> |
+                        <a href="{{ url_for('eliminar_tarea', id=tarea.id) }}" class="action-btn delete-btn"
+                           onclick="return confirm('¿Realmente desea eliminar esta tarea? Esta acción es irreversible')">Eliminar</a>
                     </td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
     {% else %}
-        <p>No hay tareas registradas.</p>
+        <p>No hay tareas eliminadas.</p>
     {% endif %}
+
+    <p>
+        <a href="{{ url_for('dashboard') }}" class="btn">Volver</a>
+    </p>
+
 </div>
 </body>
 
