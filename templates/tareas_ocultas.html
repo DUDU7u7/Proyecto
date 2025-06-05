@@ -19,7 +19,7 @@
         <span class="bienvenida">Bienvenido {{ session['usuario'] }}</span>
     </div>
     <div class="right-section">
-    <form method="get" action="{{ url_for('dashboard') }}" class="filter-form">
+    <form method="get" action="{{ url_for('tareas_ocultas') }}" class="filter-form">
         <label for="filtro">Filtrar:</label>
         <select name="filtro" id="filtro">
             <option value="todas" {% if filtro == 'todas' %}selected{% endif %}>Todas</option>
