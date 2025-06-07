@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <title>ADMIN</title>
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    <link rel="stylesheet" href="/static/styles.css">
+    <style>
+        .action-cell {
+            white-space: nowrap;
+            min-width: 200px;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="ribbon">
+        <div class="left-section">
+            <span class="bienvenida">Bienvenido {{ session['usuario'] }}</span>
+        </div>
+        <div class="right-section">
+            <a href="{{ url_for('dashboard') }}" class="btn">Mis tareas</a>
+            <a href="{{ url_for('register') }}" class="btn">Agregar Usuario</a>
+            <div class="vertical-divider"></div>
+            <a href="{{ url_for('editar_usuario') }}" class="btn">Editar Usuario</a>
+            <a href="{{ url_for('logout') }}" class="btn">Cerrar sesión</a>
+        </div>
+    </div>
+
+    <h2>Listado de Usuarios</h2>
+
+    <div class="fade-in">
+        {% if usuarios %}
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nombre</th>
+                    <th>Usuario</th>
+                    <th>Correo</th>
+                    <th>Fecha de nacimiento</th>
+                    <th class="action-cell">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for usuario in usuarios %}
+                <tr>
+                    <td>{{ usuario.id }}</td>
+                    <td>{{ usuario.nombre }}</td>
+                    <td>{{ usuario.usuario }}</td>
+                    <td>{{ usuario.email }}</td>
+                    <td>{{ usuario.fdn }}</td>
+                    <td class="action-cell">
+                        <a href="{{ url_for('editar_usuario', id=usuario.id) }}" class="action-btn edit-btn">Editar</a>
+                        <a href="{{ url_for('eliminar_usuario', id=usuario.id) }}" class="action-btn delete-btn"
+                            onclick="return confirm('¿Eliminar este usuario?')">Eliminar</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p>No hay usuarios registrados.</p>
+        {% endif %}
+    </div>
+</body>
+
+</html>

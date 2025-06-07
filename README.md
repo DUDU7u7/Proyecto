@@ -7,7 +7,8 @@ CREATE TABLE usuarios (
     usuario VARCHAR(100) NOT NULL,
     email VARCHAR(220) UNIQUE NOT NULL,
     password VARCHAR(220) NOT NULL,
-    fdn DATE NOT NULL
+    fdn DATE NOT NULL,
+    admin BOOLEAN DEFAULT FALSE
 ) ENGINE=InnoDB;
 
 CREATE TABLE categorias (

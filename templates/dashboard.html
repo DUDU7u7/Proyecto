@@ -19,6 +19,7 @@
         <span class="bienvenida">Bienvenido {{ session['usuario'] }}</span>
     </div>
     <div class="right-section">
+    <a href="{{ url_for('admin') }}" class="btn">Administrador</a>
     <a href="{{ url_for('add_task') }}" class="btn">Agregar nueva tarea</a>
     <a href="{{ url_for('tareas_ocultas') }}" class="btn">Ver tareas eliminadas</a>
     <form method="get" action="{{ url_for('dashboard') }}" class="filter-form">

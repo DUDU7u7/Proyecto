@@ -457,8 +457,8 @@ def logout():
     return redirect(url_for('login'))
 
 #EDITAR USUARIO
-@app.route('/editar_usuario', methods=['GET', 'POST'])
-def editar_usuario():
+# @app.route('/editar_usuario', methods=['GET', 'POST'])
+# def editar_usuario():
     if 'usuario_id' not in session:
         return redirect(url_for('login'))
 
@@ -523,6 +523,115 @@ def editar_usuario():
     conexion.close()
 
     return render_template('edit_user.html', usuario=usuario_data)
+@app.route('/editar_usuario', methods=['GET', 'POST'])
+@app.route('/editar_usuario/<int:id>', methods=['GET', 'POST'])
+def editar_usuario(id=None):
+    if 'usuario_id' not in session:
+        return redirect(url_for('login'))
+
+    conexion = conectar()
+    cursor = conexion.cursor(dictionary=True)
+
+    usuario_id_actual = session['usuario_id']
+    es_admin = session.get('admin')
+
+    # Si es admin y se proporcionó un id, edita a ese usuario
+    if es_admin and id is not None:
+        usuario_id_editar = id
+    else:
+        usuario_id_editar = usuario_id_actual
+
+    if request.method == 'POST':
+        nombre = request.form['nombre']
+        usuario = request.form['usuario']
+        email = request.form['email']
+        fecha_nacimiento = request.form.get('fdn')
+        nueva_password = request.form.get('password')
+
+        # Validar que no exista otro usuario con mismo usuario o email (excepto el actual)
+        cursor.execute(
+            "SELECT * FROM usuarios WHERE (usuario=%s OR email=%s) AND id != %s",
+            (usuario, email, usuario_id_editar)
+        )
+        existe = cursor.fetchone()
+        if existe:
+            cursor.close()
+            conexion.close()
+            error = "El nombre de usuario o correo ya están en uso por otro usuario."
+            conexion = conectar()
+            cursor = conexion.cursor(dictionary=True)
+            cursor.execute("SELECT * FROM usuarios WHERE id = %s", (usuario_id_editar,))
+            usuario_data = cursor.fetchone()
+            cursor.close()
+            conexion.close()
+            return render_template('edit_user.html', usuario=usuario_data, error=error)
+
+        # Actualizar datos
+        if nueva_password:
+            from werkzeug.security import generate_password_hash
+            password_hash = generate_password_hash(nueva_password)
+            cursor.execute(
+                "UPDATE usuarios SET nombre=%s, usuario=%s, email=%s, password=%s, fdn=%s WHERE id=%s",
+                (nombre, usuario, email, password_hash, fecha_nacimiento, usuario_id_editar)
+            )
+        else:
+            cursor.execute(
+                "UPDATE usuarios SET nombre=%s, usuario=%s, email=%s, fdn=%s WHERE id=%s",
+                (nombre, usuario, email, fecha_nacimiento, usuario_id_editar)
+            )
+
+        conexion.commit()
+        cursor.close()
+        conexion.close()
+
+        # Si está editando su propio usuario, actualizar sesión
+        if usuario_id_actual == usuario_id_editar:
+            session['usuario'] = usuario
+
+        return redirect(url_for('dashboard') if not es_admin else url_for('admin'))
+
+    # GET: obtener datos del usuario para mostrar en el formulario
+    cursor.execute("SELECT * FROM usuarios WHERE id = %s", (usuario_id_editar,))
+    usuario_data = cursor.fetchone()
+    cursor.close()
+    conexion.close()
+
+    return render_template('edit_user.html', usuario=usuario_data)
+
+
+@app.route('/admin')
+def admin():
+    if 'usuario' not in session:
+        return redirect(url_for('login'))
+
+    conexion = conectar()
+    cursor = conexion.cursor(dictionary=True)
+
+    cursor.execute("SELECT id, nombre, usuario, email, fdn FROM usuarios")
+    usuarios = cursor.fetchall()
+
+    cursor.close()
+    conexion.close()
+
+    return render_template('admin.html', usuarios=usuarios)
+
+@app.route('/eliminar_usuario/<int:id>', methods=['POST', 'GET'])
+def eliminar_usuario(id):
+    if 'usuario' not in session:
+        return redirect(url_for('login'))
+
+    conexion = conectar()
+    cursor = conexion.cursor()
+
+    cursor.execute("DELETE FROM usuarios WHERE id = %s", (id,))
+    conexion.commit()
+
+    cursor.close()
+    conexion.close()
+
+    return redirect(url_for('admin'))
+
+
 
 if __name__ == '__main__':
     app.run(debug=True)
