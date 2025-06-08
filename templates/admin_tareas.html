@@ -1,0 +1,24 @@
+<h2>Tareas de {{ usuario.nombre }}</h2>
+<a href="{{ url_for('admin_nueva_tarea', id=usuario.id) }}" class="btn">Agregar Tarea</a>
+
+{% if tareas %}
+<table>
+  <thead>...</thead>
+  <tbody>
+    {% for tarea in tareas %}
+    <tr>
+      <td>{{ tarea.titulo }}</td>
+      <td>{{ tarea.fecha_limite }}</td>
+      ...
+      <td>
+        <a href="{{ url_for('admin_editar_tarea', id=tarea.id) }}" class="btn">Editar</a>
+        <a href="{{ url_for('admin_eliminar_tarea', id=tarea.id) }}" class="btn"
+           onclick="return confirm('¿Eliminar esta tarea?')">Eliminar</a>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p>No tiene tareas registradas.</p>
+{% endif %}

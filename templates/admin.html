@@ -53,7 +53,7 @@
                     <td>{{ usuario.email }}</td>
                     <td>{{ usuario.fdn }}</td>
                     <td class="action-cell">
-                        <a href="{{ url_for('editar_usuario', id=usuario.id) }}" class="action-btn edit-btn">Editar</a>
+                        <a href="{{ url_for('admin_editar_usuario', id=usuario.id) }}" class="action-btn edit-btn">Editar</a>
                         <a href="{{ url_for('eliminar_usuario', id=usuario.id) }}" class="action-btn delete-btn"
                             onclick="return confirm('¿Eliminar este usuario?')">Eliminar</a>
                     </td>

@@ -615,6 +615,57 @@ def admin():
 
     return render_template('admin.html', usuarios=usuarios)
 
+@app.route('/admin/editar_usuario/<int:id>', methods=['GET', 'POST'])
+def admin_editar_usuario(id):
+    if 'usuario' not in session:
+        return redirect(url_for('login'))
+
+    conexion = conectar()
+    cursor = conexion.cursor(dictionary=True)
+
+    # Obtener datos actuales del usuario
+    if request.method == 'GET':
+        cursor.execute("SELECT * FROM usuarios WHERE id = %s", (id,))
+        usuario = cursor.fetchone()
+
+        if not usuario:
+            cursor.close()
+            conexion.close()
+            return "Usuario no encontrado", 404
+
+        cursor.close()
+        conexion.close()
+        return render_template('edit_user.html', usuario=usuario)
+
+    # POST: Actualizar los datos
+    if request.method == 'POST':
+        nombre = request.form['nombre']
+        usuario_nombre = request.form['usuario']
+        email = request.form['email']
+        fdn = request.form['fdn']
+        password = request.form['password']
+
+        # Validaciones opcionales
+        if not nombre or not usuario_nombre or not email or not fdn:
+            cursor.close()
+            conexion.close()
+            return render_template('edit_user.html', usuario=request.form, error="Todos los campos excepto contraseña son obligatorios.")
+
+        if password:
+            password_hash = generate_password_hash(password)
+            cursor.execute("""
+                UPDATE usuarios SET nombre=%s, usuario=%s, email=%s, fdn=%s, password=%s WHERE id=%s
+            """, (nombre, usuario_nombre, email, fdn, password_hash, id))
+        else:
+            cursor.execute("""
+                UPDATE usuarios SET nombre=%s, usuario=%s, email=%s, fdn=%s WHERE id=%s
+            """, (nombre, usuario_nombre, email, fdn, id))
+
+        conexion.commit()
+        cursor.close()
+        conexion.close()
+        return redirect(url_for('admin'))
+
 @app.route('/eliminar_usuario/<int:id>', methods=['POST', 'GET'])
 def eliminar_usuario(id):
     if 'usuario' not in session:
