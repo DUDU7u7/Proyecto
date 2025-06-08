@@ -1,8 +1,11 @@
-from flask import Flask, render_template, request, redirect, url_for, session
+from flask import Flask, render_template, request, redirect, url_for, session, send_file
 import mysql.connector
 from werkzeug.security import generate_password_hash, check_password_hash
-from datetime import datetime
+from datetime import datetime, timedelta
 from functools import wraps
+from io import BytesIO
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import letter
 
 app = Flask(__name__)
 app.secret_key = 'clave_secreta' 
@@ -598,7 +601,7 @@ def editar_usuario(id=None):
 
     return render_template('edit_user.html', usuario=usuario_data)
 
-
+#VISTA DE ADMINISTRADOR
 @app.route('/admin')
 def admin():
     if 'usuario' not in session:
@@ -615,6 +618,7 @@ def admin():
 
     return render_template('admin.html', usuarios=usuarios)
 
+#VISTA DE ADMIN PARA EDITAR USUARIOS
 @app.route('/admin/editar_usuario/<int:id>', methods=['GET', 'POST'])
 def admin_editar_usuario(id):
     if 'usuario' not in session:
@@ -666,6 +670,7 @@ def admin_editar_usuario(id):
         conexion.close()
         return redirect(url_for('admin'))
 
+#VISTA DE ADMIN PARA ELIMINAR USUARIOS
 @app.route('/eliminar_usuario/<int:id>', methods=['POST', 'GET'])
 def eliminar_usuario(id):
     if 'usuario' not in session:
@@ -682,7 +687,97 @@ def eliminar_usuario(id):
 
     return redirect(url_for('admin'))
 
+#GENERAR REPORTE DE TAREAS
+@app.route('/reporte_tareas')
+def reporte_tareas():
+    if 'usuario_id' not in session:
+        return redirect(url_for('login'))
+    return render_template('reporte_tareas.html')
 
+@app.route('/generar_reporte', methods=['POST'])
+def generar_reporte():
+    if 'usuario_id' not in session:
+        return redirect(url_for('login'))
+    usuario_id = session['usuario_id']
+    meses = int(request.form['rango'])
+    fecha_limite = datetime.now() - timedelta(days=30 * meses)
+
+    conexion = conectar()
+    cursor = conexion.cursor(dictionary=True)
+
+    cursor.execute("""
+        SELECT t.titulo, t.descripcion, t.fecha_limite, c.nombre AS categoria,
+               p.nombre AS prioridad, e.nombre AS estado
+        FROM tareas t
+        JOIN categorias c ON t.categoria_id = c.id
+        JOIN prioridades p ON t.prioridad_id = p.id
+        JOIN estados e ON t.estado_id = e.id
+        WHERE t.usuario_id = %s AND t.fecha_limite >= %s
+        ORDER BY t.fecha_limite ASC
+    """, (usuario_id, fecha_limite))
+
+    tareas = cursor.fetchall()
+    cursor.close()
+    conexion.close()
+
+    buffer = BytesIO()
+    pdf = canvas.Canvas(buffer, pagesize=letter)
+    width, height = letter
+    y = height - 50
+    pagina = 1
+
+    def nueva_pagina():
+        nonlocal y, pagina
+        pdf.showPage()
+        pagina += 1
+        y = height - 50
+        encabezado()
+
+    def encabezado():
+        pdf.setFont("Helvetica-Bold", 14)
+        pdf.drawString(50, y, f"Reporte de Tareas - Últimos {meses} mes(es)")
+        pdf.setFont("Helvetica", 9)
+        pdf.drawRightString(width - 40, y, f"Página {pagina}")
+        y_offset = 20
+        pdf.setFont("Helvetica-Bold", 10)
+        pdf.drawString(50, y - y_offset, "Título")
+        pdf.drawString(200, y - y_offset, "F. Límite")
+        pdf.drawString(300, y - y_offset, "Categoría")
+        pdf.drawString(400, y - y_offset, "Prioridad")
+        pdf.drawString(480, y - y_offset, "Estado")
+        return y - y_offset - 10
+
+    pdf.setFont("Helvetica", 10)
+    y = encabezado()
+
+    for tarea in tareas:
+        if y < 80:
+            nueva_pagina()
+
+        pdf.setFont("Helvetica", 10)
+        pdf.drawString(50, y, tarea['titulo'][:30])
+        pdf.drawString(200, y, tarea['fecha_limite'].strftime('%Y-%m-%d'))
+        pdf.drawString(300, y, tarea['categoria'])
+        pdf.drawString(400, y, tarea['prioridad'])
+        pdf.drawString(480, y, tarea['estado'])
+
+        y -= 15
+
+        # Segunda línea con descripción (opcional, más detallado)
+        if tarea['descripcion']:
+            pdf.setFont("Helvetica-Oblique", 9)
+            descripcion = tarea['descripcion'][:100]  # limita largo
+            pdf.drawString(70, y, f"Descripción: {descripcion}")
+            y -= 15
+
+        # Línea divisoria
+        pdf.line(50, y, width - 50, y)
+        y -= 10
+
+    pdf.save()
+    buffer.seek(0)
+
+    return send_file(buffer, as_attachment=True, download_name="reporte_tareas.pdf", mimetype='application/pdf')
 
 if __name__ == '__main__':
     app.run(debug=True)
