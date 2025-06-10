@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, redirect, url_for, session, s
 import mysql.connector
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, timedelta
-from functools import wraps
+import functools
 from io import BytesIO
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter

@@ -16,19 +16,21 @@
 <body>
 <div class="ribbon">
     <div class="left-section">
-        <span class="bienvenida">Bienvenido {{ session['usuario'] }}</span>
+        <span class="bienvenida escritura">Bienvenido {{ session['usuario'] }}</span>
     </div>
     <div class="right-section">
-    <a href="{{ url_for('admin') }}" class="btn">Administrador</a>
+        {% if session.get('usuario') == 'admin' %}
+             <a href="{{ url_for('admin') }}" class="btn">Administrador</a>
+        {% endif %}
     <a href="{{ url_for('add_task') }}" class="btn">Agregar nueva tarea</a>
     <a href="{{ url_for('tareas_ocultas') }}" class="btn">Ver tareas eliminadas</a>
     <form method="get" action="{{ url_for('dashboard') }}" class="filter-form">
         <label for="filtro">Filtrar:</label>
         <select name="filtro" id="filtro">
-            <option value="todas" {% if filtro == 'todas' %}selected{% endif %}>Todas</option>
-            <option value="pendientes" {% if filtro == 'pendientes' %}selected{% endif %}>No vencidas</option>
-            <option value="completas" {% if filtro == 'completas' %}selected{% endif %}>Completas</option>
-            <option value="vencidas" {% if filtro == 'vencidas' %}selected{% endif %}>Vencidas</option>
+            <option value="todas" {% if filtro =='todas' %}selected{% endif %}>Todas</option>
+            <option value="pendientes" {% if filtro =='pendientes' %}selected{% endif %}>No vencidas</option>
+            <option value="completas" {% if filtro =='completas' %}selected{% endif %}>Completas</option>
+            <option value="vencidas" {% if filtro =='vencidas' %}selected{% endif %}>Vencidas</option>
         </select>
         <button type="submit">Aplicar</button>
     </form>
@@ -69,8 +71,8 @@
             </thead>
             <tbody>
                 {% for tarea in tareas %}
-                <tr {% if tarea.tiempo_restante == 'Vencida' %}style="background-color: #f8d7da;"{% endif %}
-                and {% if tarea.estado == 'Completada' %}style="background-color:rgb(218, 248, 215);"{% endif %}>
+                <tr {% if tarea.tiempo_restante =='Vencida' %}style="background-color: #f8d7da;"{% endif %}
+                and {% if tarea.estado =='Completada' %}style="background-color:rgb(218, 248, 215);"{% endif %}>
                     <td>{{ tarea.titulo }}</td>
                     <td>{{ tarea.descripcion }}</td>
                     <td>{{ tarea.tiempo_restante }}</td>
