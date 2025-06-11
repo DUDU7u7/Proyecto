@@ -40,6 +40,7 @@ def login():
         if user and check_password_hash(user['password'], contrasena):
             session['usuario'] = user['usuario']
             session['usuario_id'] = user['id']  # Guardamos id para control
+            session['usuario_admin'] = user['admin']
             return redirect(url_for('dashboard'))
         else:
             error = 'Usuario o contraseña incorrectos'
@@ -156,13 +157,13 @@ def add_task():
     conexion = conectar()
     cursor = conexion.cursor(dictionary=True)
 
-    cursor.execute("SELECT id, nombre FROM categorias")
+    cursor.execute("SELECT id, nombre, visible FROM categorias WHERE visible = TRUE")
     categorias = cursor.fetchall()
 
-    cursor.execute("SELECT id, nombre FROM prioridades")
+    cursor.execute("SELECT id, nombre, visible FROM prioridades WHERE visible = TRUE")
     prioridades = cursor.fetchall()
 
-    cursor.execute("SELECT id, nombre FROM estados")
+    cursor.execute("SELECT id, nombre, visible FROM estados WHERE visible = TRUE")
     estados = cursor.fetchall()
 
     if request.method == 'POST':
@@ -272,13 +273,13 @@ def editar_tarea(id):
         return "Tarea no encontrada o acceso no autorizado", 403
 
     # Obtener opciones desplegables
-    cursor.execute("SELECT id, nombre FROM categorias")
+    cursor.execute("SELECT id, nombre, visible FROM categorias WHERE visible = TRUE")
     categorias = cursor.fetchall()
 
-    cursor.execute("SELECT id, nombre FROM prioridades")
+    cursor.execute("SELECT id, nombre, visible FROM prioridades WHERE visible = TRUE")
     prioridades = cursor.fetchall()
 
-    cursor.execute("SELECT id, nombre FROM estados")
+    cursor.execute("SELECT id, nombre, visible FROM estados WHERE visible = TRUE")
     estados = cursor.fetchall()
 
     error = None
@@ -526,7 +527,9 @@ def logout():
     conexion.close()
 
     return render_template('edit_user.html', usuario=usuario_data)
+
 @app.route('/editar_usuario', methods=['GET', 'POST'])
+
 @app.route('/editar_usuario/<int:id>', methods=['GET', 'POST'])
 def editar_usuario(id=None):
     if 'usuario_id' not in session:
@@ -610,13 +613,62 @@ def admin():
     conexion = conectar()
     cursor = conexion.cursor(dictionary=True)
 
-    cursor.execute("SELECT id, nombre, usuario, email, fdn FROM usuarios")
-    usuarios = cursor.fetchall()
+    cursor.execute("SELECT id, nombre, usuario, email, fdn FROM usuarios WHERE admin = TRUE AND id != %s", (session['usuario_id'],))
+    usuarios_admin = cursor.fetchall()
+
+    cursor.execute("SELECT id, nombre, usuario, email, fdn FROM usuarios WHERE admin = FALSE")
+    usuarios_no_admin = cursor.fetchall()
+
+    cursor.execute("SELECT id, nombre, visible FROM categorias")
+    categorias = cursor.fetchall()
+
+    cursor.execute("SELECT id, nombre, visible FROM prioridades")
+    prioridades = cursor.fetchall()
+
+    cursor.execute("SELECT id, nombre, visible FROM estados")
+    estados = cursor.fetchall()
 
     cursor.close()
     conexion.close()
 
-    return render_template('admin.html', usuarios=usuarios)
+    return render_template('admin.html', usuarios_a=usuarios_admin, usuarios_na=usuarios_no_admin, categorias=categorias, prioridades=prioridades, estados=estados)
+
+#ISTA DE ADMINISTRADOR PARA REGISTRO DE USUARIO
+@app.route('/register_admin', methods=['GET', 'POST'])
+def register_admin():
+    error = None
+    if request.method == 'POST':
+        nombre = request.form['nombre']
+        usuario = request.form['usuario']
+        email = request.form['email']
+        contrasena = request.form['password']
+        fdn = request.form['fdn']
+        admin = request.form['admin']
+
+        hashed_pw = generate_password_hash(contrasena)
+
+        conexion = conectar()
+        cursor = conexion.cursor()
+        cursor.execute("SELECT * FROM usuarios WHERE usuario=%s OR email=%s", (usuario, email))
+        existe = cursor.fetchone()
+        if existe:
+            error = "El nombre de usuario o correo ya están registrados."
+            cursor.close()
+            conexion.close()
+            return render_template('register_admin.html', error=error)
+        try:
+            cursor.execute(
+                "INSERT INTO usuarios (nombre, usuario, email, password, fdn, admin) VALUES (%s, %s, %s, %s, %s, %s)",
+                (nombre, usuario, email, hashed_pw, fdn, admin)
+            )
+            conexion.commit()
+            return redirect(url_for('admin'))
+        except mysql.connector.Error as e:
+            error = f"Error al registrar: {str(e)}"
+        finally:
+            cursor.close()
+            conexion.close()
+    return render_template('register_admin.html', error=error)
 
 #VISTA DE ADMIN PARA EDITAR USUARIOS
 @app.route('/admin/editar_usuario/<int:id>', methods=['GET', 'POST'])
@@ -682,6 +734,358 @@ def eliminar_usuario(id):
     cursor.execute("DELETE FROM usuarios WHERE id = %s", (id,))
     conexion.commit()
 
+    cursor.close()
+    conexion.close()
+
+    return redirect(url_for('admin'))
+
+#VISTA DE ADMIN PARA CONVERTIR EN ADMIN
+@app.route('/hacer_admin/<int:id>', methods=['POST', 'GET'])
+def hacer_admin(id):
+    if 'usuario' not in session:
+        return redirect(url_for('login'))
+
+    conexion = conectar()
+    cursor = conexion.cursor()
+
+    cursor.execute("UPDATE usuarios SET admin = TRUE WHERE id = %s", (id,))
+    conexion.commit()
+    cursor.close()
+    conexion.close()
+
+    return redirect(url_for('admin'))
+
+#VISTA DE ADMIN PARA QUITAR ADMIN
+@app.route('/quitar_admin/<int:id>', methods=['POST', 'GET'])
+def quitar_admin(id):
+    if 'usuario' not in session:
+        return redirect(url_for('login'))
+
+    conexion = conectar()
+    cursor = conexion.cursor()
+
+    cursor.execute("UPDATE usuarios SET admin = FALSE WHERE id = %s", (id,))
+    conexion.commit()
+    cursor.close()
+    conexion.close()
+
+    return redirect(url_for('admin'))
+
+
+
+#VISTA DE ADMIN PARA AGREGAR CATEGORIA
+@app.route('/agregar_categoria', methods=['GET', 'POST'])
+def agregar_categoria():
+    if 'usuario' not in session:
+        return redirect(url_for('login'))
+
+    error = None
+
+    if request.method == 'POST':
+        nombre = request.form['nombre'].strip()
+        visible = True if request.form.get('visible') == 'on' else False
+
+        if not nombre:
+            error = "El nombre de la categoría es obligatorio."
+        else:
+            conexion = conectar()
+            cursor = conexion.cursor()
+            cursor.execute("INSERT INTO categorias (nombre, visible) VALUES (%s, %s)", (nombre, visible))
+            conexion.commit()
+            cursor.close()
+            conexion.close()
+            return redirect(url_for('admin'))
+
+    return render_template('agregar_categoria.html', error=error)
+
+#VISTA DE ADMIN PARA EDITAR CATEGORIA
+@app.route('/editar_categoria/<int:id>', methods=['GET', 'POST'])
+def editar_categoria(id):
+    conexion = conectar()
+    cursor = conexion.cursor(dictionary=True)
+
+    if request.method == 'POST':
+        nuevo_nombre = request.form['nombre']
+        visible = request.form.get('visible') == 'on'
+
+        try:
+            cursor.execute("UPDATE categorias SET nombre = %s, visible = %s WHERE id = %s",
+                           (nuevo_nombre, visible, id))
+            conexion.commit()
+            return redirect(url_for('admin'))  # Redirige a donde tengas tu panel de admin
+        except mysql.connector.Error as e:
+            error = f"Error al actualizar: {str(e)}"
+            return render_template('editar_categoria.html', categoria={'id': id, 'nombre': nuevo_nombre, 'visible': visible}, error=error)
+        finally:
+            cursor.close()
+            conexion.close()
+
+    cursor.execute("SELECT * FROM categorias WHERE id = %s", (id,))
+    categoria = cursor.fetchone()
+    cursor.close()
+    conexion.close()
+
+    if not categoria:
+        return "Categoría no encontrada", 404
+
+    return render_template('editar_categoria.html', categoria=categoria)
+
+#VISTA DE ADMIN PARA HABILITAR CATEGORIA
+@app.route('/habilitar_categoria/<int:id>', methods=['POST', 'GET'])
+def habilitar_categoria(id):
+    if 'usuario' not in session:
+        return redirect(url_for('login'))
+
+    conexion = conectar()
+    cursor = conexion.cursor()
+
+    cursor.execute("SELECT * FROM categorias WHERE id = %s", (id,))
+    categoria = cursor.fetchone()
+
+    if categoria is None:
+        cursor.close()
+        conexion.close()
+        return "No tienes permiso para ocultar esta categoria.", 403
+
+    cursor.execute("UPDATE categorias SET visible = TRUE WHERE id = %s", (id,))
+    conexion.commit()
+    cursor.close()
+    conexion.close()
+
+    return redirect(url_for('admin'))
+
+#VISTA DE ADMIN PARA DESHABILITAR CATEGORIA
+@app.route('/deshabilitar_categoria/<int:id>', methods=['POST', 'GET'])
+def deshabilitar_categoria(id):
+    if 'usuario' not in session:
+        return redirect(url_for('login'))
+
+    conexion = conectar()
+    cursor = conexion.cursor()
+
+    cursor.execute("SELECT * FROM categorias WHERE id = %s", (id,))
+    categoria = cursor.fetchone()
+
+    if categoria is None:
+        cursor.close()
+        conexion.close()
+        return "No tienes permiso para ocultar esta categoria.", 403
+
+    cursor.execute("UPDATE categorias SET visible = FALSE WHERE id = %s", (id,))
+    conexion.commit()
+    cursor.close()
+    conexion.close()
+
+    return redirect(url_for('admin'))
+
+
+
+#VISTA DE ADMIN PARA AGREGAR PRIORIDADES
+@app.route('/agregar_prioridad', methods=['GET', 'POST'])
+def agregar_prioridad():
+    if 'usuario' not in session:
+        return redirect(url_for('login'))
+
+    error = None
+
+    if request.method == 'POST':
+        nombre = request.form['nombre'].strip()
+        visible = True if request.form.get('visible') == 'on' else False
+
+        if not nombre:
+            error = "El nombre de la prioridad es obligatorio."
+        else:
+            conexion = conectar()
+            cursor = conexion.cursor()
+            cursor.execute("INSERT INTO prioridades (nombre, visible) VALUES (%s, %s)", (nombre, visible))
+            conexion.commit()
+            cursor.close()
+            conexion.close()
+            return redirect(url_for('admin'))
+
+    return render_template('agregar_prioridad.html', error=error)
+
+#VISTA DE ADMIN PARA EDITAR PRIORIDAD
+@app.route('/editar_prioridad/<int:id>', methods=['GET', 'POST'])
+def editar_prioridad(id):
+    conexion = conectar()
+    cursor = conexion.cursor(dictionary=True)
+
+    if request.method == 'POST':
+        nuevo_nombre = request.form['nombre']
+        visible = request.form.get('visible') == 'on'
+
+        try:
+            cursor.execute("UPDATE prioridades SET nombre = %s, visible = %s WHERE id = %s",
+                           (nuevo_nombre, visible, id))
+            conexion.commit()
+            return redirect(url_for('admin'))  
+        except mysql.connector.Error as e:
+            error = f"Error al actualizar: {str(e)}"
+            return render_template('editar_prioridad.html', prioridad={'id': id, 'nombre': nuevo_nombre, 'visible': visible}, error=error)
+        finally:
+            cursor.close()
+            conexion.close()
+
+    cursor.execute("SELECT * FROM prioridades WHERE id = %s", (id,))
+    prioridad = cursor.fetchone()
+    cursor.close()
+    conexion.close()
+
+    if not prioridad:
+        return "Prioridad no encontrada", 404
+
+    return render_template('editar_prioridad.html', prioridad=prioridad)
+
+#VISTA DE ADMIN PARA HABILITAR PRIORIDAD
+@app.route('/habilitar_prioridad/<int:id>', methods=['POST', 'GET'])
+def habilitar_prioridad(id):
+    if 'usuario' not in session:
+        return redirect(url_for('login'))
+
+    conexion = conectar()
+    cursor = conexion.cursor()
+
+    cursor.execute("SELECT * FROM prioridades WHERE id = %s", (id,))
+    prioridad = cursor.fetchone()
+
+    if prioridad is None:
+        cursor.close()
+        conexion.close()
+        return "No tienes permiso para ocultar esta prioridad.", 403
+
+    cursor.execute("UPDATE prioridades SET visible = TRUE WHERE id = %s", (id,))
+    conexion.commit()
+    cursor.close()
+    conexion.close()
+
+    return redirect(url_for('admin'))
+
+#VISTA DE ADMIN PARA DESHABILITAR PRIORIDAD
+@app.route('/deshabilitar_prioridad/<int:id>', methods=['POST', 'GET'])
+def deshabilitar_prioridad(id):
+    if 'usuario' not in session:
+        return redirect(url_for('login'))
+
+    conexion = conectar()
+    cursor = conexion.cursor()
+
+    cursor.execute("SELECT * FROM prioridades WHERE id = %s", (id,))
+    prioridad = cursor.fetchone()
+
+    if prioridad is None:
+        cursor.close()
+        conexion.close()
+        return "No tienes permiso para ocultar esta prioridad.", 403
+
+    cursor.execute("UPDATE prioridades SET visible = FALSE WHERE id = %s", (id,))
+    conexion.commit()
+    cursor.close()
+    conexion.close()
+
+    return redirect(url_for('admin'))
+
+
+#VISTA DE ADMIN PARA AGREGAR ESTADO
+@app.route('/agregar_estado', methods=['GET', 'POST'])
+def agregar_estado():
+    if 'usuario' not in session:
+        return redirect(url_for('login'))
+
+    error = None
+
+    if request.method == 'POST':
+        nombre = request.form['nombre'].strip()
+        visible = True if request.form.get('visible') == 'on' else False
+
+        if not nombre:
+            error = "El nombre del estado es obligatorio."
+        else:
+            conexion = conectar()
+            cursor = conexion.cursor()
+            cursor.execute("INSERT INTO estados (nombre, visible) VALUES (%s, %s)", (nombre, visible))
+            conexion.commit()
+            cursor.close()
+            conexion.close()
+            return redirect(url_for('admin'))
+
+    return render_template('agregar_estado.html', error=error)
+
+#VISTA DE ADMIN PARA EDITAR ESTADO
+@app.route('/editar_estado/<int:id>', methods=['GET', 'POST'])
+def editar_estado(id):
+    conexion = conectar()
+    cursor = conexion.cursor(dictionary=True)
+
+    if request.method == 'POST':
+        nuevo_nombre = request.form['nombre']
+        visible = request.form.get('visible') == 'on'
+
+        try:
+            cursor.execute("UPDATE estados SET nombre = %s, visible = %s WHERE id = %s",
+                           (nuevo_nombre, visible, id))
+            conexion.commit()
+            return redirect(url_for('admin'))  
+        except mysql.connector.Error as e:
+            error = f"Error al actualizar: {str(e)}"
+            return render_template('editar_estado.html', estado={'id': id, 'nombre': nuevo_nombre, 'visible': visible}, error=error)
+        finally:
+            cursor.close()
+            conexion.close()
+
+    cursor.execute("SELECT * FROM estados WHERE id = %s", (id,))
+    estado = cursor.fetchone()
+    cursor.close()
+    conexion.close()
+
+    if not estado:
+        return "Estado no encontrado", 404
+
+    return render_template('editar_estado.html', estado=estado)
+
+#VISTA DE ADMIN PARA HABILITAR ESTADO 
+@app.route('/habilitar_estado/<int:id>', methods=['POST', 'GET'])
+def habilitar_estado(id):
+    if 'usuario' not in session:
+        return redirect(url_for('login'))
+
+    conexion = conectar()
+    cursor = conexion.cursor()
+
+    cursor.execute("SELECT * FROM estados WHERE id = %s", (id,))
+    estado = cursor.fetchone()
+
+    if estado is None:
+        cursor.close()
+        conexion.close()
+        return "No tienes permiso para habilitar este estado.", 403
+
+    cursor.execute("UPDATE estados SET visible = TRUE WHERE id = %s", (id,))
+    conexion.commit()
+    cursor.close()
+    conexion.close()
+
+    return redirect(url_for('admin'))
+
+#VISTA DE ADMIN PARA DESHABILITAR ESTADO
+@app.route('/deshabilitar_estado/<int:id>', methods=['POST', 'GET'])
+def deshabilitar_estado(id):
+    if 'usuario' not in session:
+        return redirect(url_for('login'))
+
+    conexion = conectar()
+    cursor = conexion.cursor()
+
+    cursor.execute("SELECT * FROM estados WHERE id = %s", (id,))
+    estado = cursor.fetchone()
+
+    if estado is None:
+        cursor.close()
+        conexion.close()
+        return "No tienes permiso para deshabilitar este estado.", 403
+
+    cursor.execute("UPDATE estados SET visible = FALSE WHERE id = %s", (id,))
+    conexion.commit()
     cursor.close()
     conexion.close()
 

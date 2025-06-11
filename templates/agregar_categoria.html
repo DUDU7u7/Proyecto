@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Agregar Categoría</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}">
+</head>
+<body>
+    <div class="contenedor">
+    <h1 class="escritura">Registro de Categoría</h1>
+
+    {% if error %}
+        <p style="color:red;">{{ error }}</p>
+    {% endif %}
+
+    <form method="post">
+        <label for="nombre">Nombre de la categoría:</label>
+        <input type="text" name="nombre" required>
+        <br><br>
+
+        <label for="visible">¿Visible?</label>
+        <input type="checkbox" name="visible" checked>
+        <br><br>
+
+        <input type="submit" value="Guardar Categoría">
+    </form>
+
+    <p><a href="{{ url_for('admin') }}" class="btn">Volver al panel</a></p>
+
+    <script>
+    document.querySelector("form").addEventListener("submit", function (e) {
+        const nombre = document.querySelector('input[name="nombre"]').value.trim();
+        let errores = [];
+
+        if (!nombre) errores.push("El nombre de la categoría es obligatorio.");
+
+        if (errores.length > 0) {
+            e.preventDefault();
+            alert(errores.join("\n"));
+        }
+    });
+    </script>
+    </div>
+</body>
+</html>

@@ -98,7 +98,8 @@ a:hover {
     padding: 10px 20px;
     border-radius: 5px;
     display: inline-block;
-    margin-top: 20px;
+    margin-top: 0px;
+    margin-bottom: 7px;
 }
 
 .btn:hover {
@@ -331,4 +332,37 @@ body {
     }
 }
 
+.accordion-toggle {
+    cursor: pointer;
+    background-color: #007BFF;
+    color: white;
+    padding: 10px;
+    font-size: 16px;
+    border: none;
+    width: 100%;
+    text-align: left;
+    outline: none;
+    border-radius: 5px;
+    margin-bottom: 10px;
+    transition: background-color 0.3s;
+}
 
+.accordion-toggle:hover {
+    background-color: #0056b3;
+}
+
+.accordion-content {
+    display: none;
+    padding: 10px;
+    border-radius: 5px;
+}
+
+.accordion-content.show {
+    display: block;
+}
+
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}

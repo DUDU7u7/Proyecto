@@ -19,7 +19,7 @@
         <span class="bienvenida escritura">Bienvenido {{ session['usuario'] }}</span>
     </div>
     <div class="right-section">
-        {% if session.get('usuario') == 'admin' %}
+        {% if session.get('usuario_admin') == 1 %}
              <a href="{{ url_for('admin') }}" class="btn">Administrador</a>
         {% endif %}
     <a href="{{ url_for('add_task') }}" class="btn">Agregar nueva tarea</a>
@@ -71,8 +71,9 @@
             </thead>
             <tbody>
                 {% for tarea in tareas %}
-                <tr {% if tarea.tiempo_restante =='Vencida' %}style="background-color: #f8d7da;"{% endif %}
-                and {% if tarea.estado =='Completada' %}style="background-color:rgb(218, 248, 215);"{% endif %}>
+                <tr {% if tarea.estado =='Completada' %}style="background-color:rgb(218, 248, 215);"{% endif %}
+                and {% if tarea.tiempo_restante =='Vencida' %}style="background-color: #f8d7da;"{% endif %}
+                >
                     <td>{{ tarea.titulo }}</td>
                     <td>{{ tarea.descripcion }}</td>
                     <td>{{ tarea.tiempo_restante }}</td>

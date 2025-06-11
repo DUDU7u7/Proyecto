@@ -28,7 +28,9 @@
         <label for="categoria">Categoría:</label>
         <select name="categoria" required>
             {% for cat in categorias %}
-                <option value="{{ cat.id }}">{{ cat.nombre }}</option>
+                {% if cat.visible %}
+                    <option value="{{ cat.id }}">{{ cat.nombre }}</option>
+                {% endif %}
             {% endfor %}
         </select>
         <br><br>
@@ -36,7 +38,9 @@
         <label for="prioridad">Prioridad:</label>
         <select name="prioridad" required>
             {% for prio in prioridades %}
-                <option value="{{ prio.id }}">{{ prio.nombre }}</option>
+                {% if prio.visible %}
+                    <option value="{{ prio.id }}">{{ prio.nombre }}</option>
+                {% endif %}
             {% endfor %}
         </select>
         <br><br>

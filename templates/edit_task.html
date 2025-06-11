@@ -29,7 +29,9 @@
         <label for="categoria">Categoría:</label>
         <select name="categoria" required>
             {% for cat in categorias %}
-                <option value="{{ cat.id }}" {% if cat.id == tarea.categoria_id %}selected{% endif %}>{{ cat.nombre }}</option>
+                {% if cat.visible %}
+                    <option value="{{ cat.id }}" {% if cat.id == tarea.categoria_id %}selected{% endif %}>{{ cat.nombre }}</option>
+                {% endif %}
             {% endfor %}
         </select>
         <br><br>
@@ -37,7 +39,9 @@
         <label for="prioridad">Prioridad:</label>
         <select name="prioridad" required>
             {% for prio in prioridades %}
-                <option value="{{ prio.id }}" {% if prio.id == tarea.prioridad_id %}selected{% endif %}>{{ prio.nombre }}</option>
+                {% if prio.visible %}
+                    <option value="{{ prio.id }}" {% if prio.id == tarea.prioridad_id %}selected{% endif %}>{{ prio.nombre }}</option>
+                {% endif %}
             {% endfor %}
         </select>
         <br><br>
@@ -45,10 +49,13 @@
         <label for="estado">Estado:</label>
         <select name="estado" required>
             {% for est in estados %}
-                <option value="{{ est.id }}" {% if est.id == tarea.estado_id %}selected{% endif %}>{{ est.nombre }}</option>
+                {% if est.visible %}
+                    <option value="{{ est.id }}" {% if est.id == tarea.estado_id %}selected{% endif %}>{{ est.nombre }}</option>
+                {% endif %}
             {% endfor %}
         </select>
         <br><br>
+
 
         <input type="submit" value="Guardar Cambios">
     </form>

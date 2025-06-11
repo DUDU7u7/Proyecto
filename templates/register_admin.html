@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Registro "Vista de Admin")</title>
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <div class = " contenedor fade in">
+    <h1 class="escritura ">Registro de Usuario</h1>
+    {% if error %}
+        <p style="color:red;">{{ error }}</p>
+    {% endif %}
+    <form method="post" id="formRegistro" novalidate>
+        <label for="nombre">Nombre completo:</label>
+        <input type="text" name="nombre" required>
+        <br><br>
+
+        <label for="usuario">Nombre de usuario:</label>
+        <input type="text" name="usuario" required>
+        <br><br>
+
+        <label for="email">Correo electrónico:</label>
+        <input type="email" name="email" required>
+        <br><br>
+
+        <label for="password">Contraseña:</label>
+        <input type="password" name="password" required>
+        <br><br>
+
+        <label for="fdn">Fecha de nacimiento:</label>
+        <input type="date" name="fdn" required>
+        <br><br>
+
+        <input type="hidden" name="admin" value="0">
+        <label for="admin">Hacer admin:</label>
+        <input type="checkbox" name="admin" id="admin" value="1">
+        <br><br>
+
+        <input type="submit" value="Registrarse">
+    </form>
+
+    <script>
+        document.getElementById('formRegistro').addEventListener('submit', function (e) {
+            const nombre = document.querySelector('input[name="nombre"]').value.trim();
+            const usuario = document.querySelector('input[name="usuario"]').value.trim();
+            const email = document.querySelector('input[name="email"]').value.trim();
+            const password = document.querySelector('input[name="password"]').value.trim();
+            const fdn = document.querySelector('input[name="fdn"]').value;
+
+            let errores = [];
+
+            if (nombre === '') errores.push("Nombre completo es obligatorio.");
+            if (usuario === '') errores.push("Nombre de usuario es obligatorio.");
+            if (email === '' || !email.includes('@')) errores.push("Correo electrónico inválido.");
+            if (password.length < 6) errores.push("La contraseña debe tener al menos 6 caracteres.");
+            if (fdn === '') errores.push("Fecha de nacimiento es obligatoria.");
+
+            if (errores.length > 0) {
+                e.preventDefault();
+                alert(errores.join("\n"));
+            }
+        });
+    </script>
+        </div>
+</body>
+</html>
