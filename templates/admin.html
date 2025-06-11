@@ -23,6 +23,16 @@
         <div class="right-section">
             <a href="{{ url_for('dashboard') }}" class="btn">Mis tareas</a>
             <div class="vertical-divider"></div>
+            <div class="dropdown">
+                <button class="btn dropdown-toggle">Reportes ▼</button>
+                <div class="dropdown-menu">
+                    <a href="{{ url_for('reporte_usuarios') }}">Usuarios</a>
+                    <a href="{{ url_for('reporte_categorias') }}">Categorías</a>
+                    <a href="{{ url_for('reporte_prioridades') }}">Prioridades</a>
+                    <a href="{{ url_for('reporte_estados') }}">Estados</a>
+                </div>
+            </div>
+            <div class="vertical-divider"></div>
             <a href="{{ url_for('editar_usuario') }}" class="btn">Editar Usuario</a>
             <a href="{{ url_for('logout') }}" class="btn">Cerrar sesión</a>
         </div>
@@ -177,7 +187,7 @@
                     <a href="{{ url_for('editar_prioridad', id=prioridad.id) }}" class="action-btn edit-btn">Editar</a> |
                         {% if prioridad.visible %}
                              <a href="{{ url_for('deshabilitar_prioridad', id=prioridad.id) }}" class="action-btn delete-btn"
-                                onclick="return confirm('¿Deshabilitar esta categoría?')">Deshabilitar</a>
+                                onclick="return confirm('¿Deshabilitar esta prioridad?')">Deshabilitar</a>
                         {% else %}
                           <a href="{{ url_for('habilitar_prioridad', id=prioridad.id) }}" class="action-btn complete-btn">Habilitar</a>
                         {% endif %}
@@ -216,7 +226,7 @@
                     <a href="{{ url_for('editar_estado', id=estado.id) }}" class="action-btn edit-btn">Editar</a> |
                         {% if estado.visible %}
                              <a href="{{ url_for('deshabilitar_estado', id=estado.id) }}" class="action-btn delete-btn"
-                                onclick="return confirm('¿Deshabilitar esta categoría?')">Deshabilitar</a>
+                                onclick="return confirm('¿Deshabilitar este estado?')">Deshabilitar</a>
                         {% else %}
                           <a href="{{ url_for('habilitar_estado', id=estado.id) }}" class="action-btn complete-btn">Habilitar</a>
                         {% endif %}

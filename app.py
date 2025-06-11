@@ -6,9 +6,66 @@ import functools
 from io import BytesIO
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
+from reportlab.lib.pagesizes import landscape, letter
+
+
 
 app = Flask(__name__)
 app.secret_key = 'clave_secreta' 
+
+def generar_pdf_reporte(titulo, columnas, claves, datos):
+    buffer = BytesIO()
+    pdf = canvas.Canvas(buffer, pagesize=landscape(letter))
+    width, height = landscape(letter)
+    y = height - 50
+    pagina = 1
+
+    margen_izquierdo = 50
+    margen_derecho = 50
+    espacio_total = width - margen_izquierdo - margen_derecho
+    ancho_col = espacio_total // len(columnas)
+
+    def nueva_pagina():
+        nonlocal y, pagina
+        pdf.showPage()
+        pagina += 1
+        y = height - 50
+        encabezado()
+
+    def encabezado():
+        nonlocal y
+        pdf.setFont("Helvetica-Bold", 14)
+        pdf.drawString(margen_izquierdo, y, f"Reporte: {titulo}")
+        pdf.setFont("Helvetica", 9)
+        pdf.drawRightString(width - margen_derecho, y, f"Página {pagina}")
+        y -= 20
+
+        pdf.setFont("Helvetica-Bold", 9)
+        for i, col in enumerate(columnas):
+            x = margen_izquierdo + i * ancho_col
+            pdf.drawString(x, y, str(col))
+        y -= 15
+        pdf.line(margen_izquierdo, y, width - margen_derecho, y)
+        y -= 10
+
+    encabezado()
+
+    for fila in datos:
+        if y < 50:
+            nueva_pagina()
+
+        pdf.setFont("Helvetica", 8)
+        for i, clave in enumerate(claves):
+            x = margen_izquierdo + i * ancho_col
+            valor = fila.get(clave, "")
+            pdf.drawString(x, y, str(valor))
+        y -= 15
+
+    pdf.save()
+    buffer.seek(0)
+    return buffer
+
+
 
 #CONEXIÓN A BD
 def conectar():
@@ -18,6 +75,9 @@ def conectar():
         password='',
         database='dudulist'
     )
+
+
+
 
 #INGRESO DE USUARIO
 @app.route('/', methods=['GET', 'POST'])
@@ -149,6 +209,9 @@ def eliminar(id):
     session.pop('usuario')
     session.pop('usuario_id')
     return redirect(url_for('login'))
+
+
+
 
 #REGISTRO DE TAREA
 @app.route('/add_task', methods=['GET', 'POST'])
@@ -453,6 +516,9 @@ def tareas_ocultas():
 
     return render_template('tareas_ocultas.html', tareas=tareas)
 
+
+
+
 #CERRA SESIÓN
 @app.route('/logout')
 def logout():
@@ -604,6 +670,8 @@ def editar_usuario(id=None):
 
     return render_template('edit_user.html', usuario=usuario_data)
 
+
+
 #VISTA DE ADMINISTRADOR
 @app.route('/admin')
 def admin():
@@ -632,6 +700,8 @@ def admin():
     conexion.close()
 
     return render_template('admin.html', usuarios_a=usuarios_admin, usuarios_na=usuarios_no_admin, categorias=categorias, prioridades=prioridades, estados=estados)
+
+
 
 #ISTA DE ADMINISTRADOR PARA REGISTRO DE USUARIO
 @app.route('/register_admin', methods=['GET', 'POST'])
@@ -986,6 +1056,7 @@ def deshabilitar_prioridad(id):
     return redirect(url_for('admin'))
 
 
+
 #VISTA DE ADMIN PARA AGREGAR ESTADO
 @app.route('/agregar_estado', methods=['GET', 'POST'])
 def agregar_estado():
@@ -1091,12 +1162,93 @@ def deshabilitar_estado(id):
 
     return redirect(url_for('admin'))
 
+
+
+
 #GENERAR REPORTE DE TAREAS
 @app.route('/reporte_tareas')
 def reporte_tareas():
     if 'usuario_id' not in session:
         return redirect(url_for('login'))
     return render_template('reporte_tareas.html')
+
+#GENERAR REPORTE DE USUARIOS
+@app.route('/reporte_usuarios')
+def reporte_usuarios():
+    if 'usuario' not in session:
+        return redirect(url_for('login'))
+
+    conexion = conectar()
+    cursor = conexion.cursor(dictionary=True)
+    cursor.execute("SELECT id, nombre, usuario, email, fdn, admin FROM usuarios")
+    datos = cursor.fetchall()
+    cursor.close()
+    conexion.close()
+
+    columnas = ["ID", "Nombre", "Usuario", "Correo", "Fecha de nacimiento", "Admin"]
+    claves = ["id", "nombre", "usuario", "email", "fdn", "admin"]
+
+    buffer = generar_pdf_reporte("Usuarios Registrados", columnas, claves, datos)
+    return send_file(buffer, as_attachment=True, download_name="usuarios.pdf", mimetype='application/pdf')
+
+#GENERAR REPORTE DE CATEGORÍAS
+@app.route('/reporte_categorias')
+def reporte_categorias():
+    if 'usuario' not in session:
+        return redirect(url_for('login'))
+
+    conexion = conectar()
+    cursor = conexion.cursor(dictionary=True)
+    cursor.execute("SELECT id, nombre, visible FROM categorias")
+    datos = cursor.fetchall()
+    cursor.close()
+    conexion.close()
+
+    columnas = ["ID", "Nombre", "Visible"]
+    claves = ["id", "nombre", "visible"]
+
+    buffer = generar_pdf_reporte("Categorías", columnas, claves, datos)
+    return send_file(buffer, as_attachment=True, download_name="categorias.pdf", mimetype='application/pdf')
+
+
+#GENERAR REPORTE DE PRIORIDADES
+@app.route('/reporte_prioridades')
+def reporte_prioridades():
+    if 'usuario' not in session:
+        return redirect(url_for('login'))
+
+    conexion = conectar()
+    cursor = conexion.cursor(dictionary=True)
+    cursor.execute("SELECT id, nombre, visible FROM prioridades")
+    datos = cursor.fetchall()
+    cursor.close()
+    conexion.close()
+
+    columnas = ["ID", "Nombre", "Visible"]
+    claves = ["id", "nombre", "visible"]
+
+    buffer = generar_pdf_reporte("Prioridades", columnas, claves, datos)
+    return send_file(buffer, as_attachment=True, download_name="prioridades.pdf", mimetype='application/pdf')
+
+
+#GENERAR REPORTE DE ESTADOS
+@app.route('/reporte_estados')
+def reporte_estados():
+    if 'usuario' not in session:
+        return redirect(url_for('login'))
+
+    conexion = conectar()
+    cursor = conexion.cursor(dictionary=True)
+    cursor.execute("SELECT id, nombre, visible FROM estados")
+    datos = cursor.fetchall()
+    cursor.close()
+    conexion.close()
+
+    columnas = ["ID", "Nombre", "Visible"]
+    claves = ["id", "nombre", "visible"]
+
+    buffer = generar_pdf_reporte("Estados", columnas, claves, datos)
+    return send_file(buffer, as_attachment=True, download_name="estados.pdf", mimetype='application/pdf')
 
 @app.route('/generar_reporte', methods=['POST'])
 def generar_reporte():
